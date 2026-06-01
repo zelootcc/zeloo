@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'cadastro.dart';
+import 'home_cliente_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,8 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _loading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login realizado com sucesso!')),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeClienteScreen()),
       );
     });
   }
