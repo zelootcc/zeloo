@@ -1,6 +1,3 @@
-// home_cliente_screen.dart
-// Dashboard/Home do cliente logado
-
 import 'package:flutter/material.dart';
 import 'mock_data.dart';
 import 'lista_profissionais_screen.dart';
@@ -27,7 +24,6 @@ class HomeClienteScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Profissionais com avaliação >= 4.8
     final destaque = profissionaisMock
         .where((p) => p.avaliacao >= 4.8)
         .toList();
@@ -36,9 +32,8 @@ class HomeClienteScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF4F7FB),
       body: CustomScrollView(
         slivers: [
-          // ── Header ──────────────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 170,
+            expandedHeight: 220,
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -84,7 +79,6 @@ class HomeClienteScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Barra de busca
                     GestureDetector(
                       onTap: () => Navigator.push(
                         context,
@@ -124,8 +118,6 @@ class HomeClienteScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── Categorias rápidas ───────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
@@ -181,8 +173,6 @@ class HomeClienteScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── Profissionais em destaque ────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
@@ -204,15 +194,12 @@ class HomeClienteScreen extends StatelessWidget {
               ),
             ),
           ),
-
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
       ),
     );
   }
 }
-
-// ── Widgets auxiliares ────────────────────────────────────────────────────────
 
 class _AvatarCliente extends StatelessWidget {
   @override
