@@ -176,28 +176,40 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Categorias',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Encontre o serviço certo para você',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
+  mainAxisAlignment: MainAxisAlignment.end,
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Center(
+      child: Image.asset(
+        'assets/images/logominimal.png',
+        height: 55,
+        fit: BoxFit.contain,
+      ),
+    ),
+
+    const SizedBox(height: 12),
+
+    const Text(
+      'Categorias',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 26,
+        fontWeight: FontWeight.w900,
+      ),
+    ),
+
+    const SizedBox(height: 4),
+
+    Text(
+      'Encontre o serviço certo para você',
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.8),
+        fontSize: 16,
+        fontWeight: FontWeight.w900,
+      ),
+    ),
+  ],
+),
               ),
             ),
           ),
