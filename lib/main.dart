@@ -336,7 +336,7 @@ class _BannerHero extends StatelessWidget {
           bottomRight: Radius.circular(36),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 2, 24, 20),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
       child: Column(
         children: [
           Image.asset('imagens/logominimal.png', height: 90),

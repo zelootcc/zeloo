@@ -153,7 +153,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 140,
+            expandedHeight: 210,
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -181,9 +181,8 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
   children: [
     Center(
       child: Image.asset(
-        'assets/images/logominimal.png',
-        height: 55,
-        fit: BoxFit.contain,
+        'imagens/logominimal.png',
+        height: 90,
       ),
     ),
 

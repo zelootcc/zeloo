@@ -33,7 +33,7 @@ class HomeClienteScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 300,
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -47,10 +47,12 @@ class HomeClienteScreen extends StatelessWidget {
                     bottomRight: Radius.circular(32),
                   ),
                 ),
-                padding: const EdgeInsets.fromLTRB(24, 56, 24, 20),
+                padding: const EdgeInsets.fromLTRB(24, 48, 24, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(child: Image.asset('imagens/logominimal.png', height: 90)),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

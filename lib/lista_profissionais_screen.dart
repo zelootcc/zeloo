@@ -1,6 +1,3 @@
-// lista_profissionais_screen.dart
-// Lista de profissionais + Perfil + Agendamento (tudo em um arquivo)
-
 import 'package:flutter/material.dart';
 import 'mock_data.dart';
 
@@ -90,7 +87,7 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
         slivers: [
           // Header
           SliverAppBar(
-            expandedHeight: 140,
+            expandedHeight: 240,
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -113,9 +110,19 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Center(
+                        child: Image.asset(
+                          'imagens/logominimal.png',
+                          height: 90,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     const Text(
                       'Profissionais',
                       style: TextStyle(
@@ -435,7 +442,7 @@ class PerfilProfissionalScreen extends StatelessWidget {
         slivers: [
           // Header com foto/avatar
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 180,
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,

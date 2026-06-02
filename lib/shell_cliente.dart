@@ -1,6 +1,3 @@
-// cliente_shell.dart
-// Shell principal com navegação para o cliente logado
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'home_cliente_screen.dart';
