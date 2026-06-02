@@ -339,7 +339,7 @@ class _BannerHero extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 2, 24, 20),
       child: Column(
         children: [
-          Image.asset('assets/imagens/logominimal.png', height: 90),
+          Image.asset('imagens/logominimal.png', height: 90),
           Container(
             width: 145,
             height: 4,
