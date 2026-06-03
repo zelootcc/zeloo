@@ -109,36 +109,33 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
                   ),
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-child: Center(
-  child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Image.asset(
-        'imagens/logominimal.png',
-        height: 100,
-      ),
-      const SizedBox(height: 12),
-      const Text(
-        'Profissionais',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 26,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        'Encontre o profissional ideal',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.white.withOpacity(0.8),
-          fontSize: 14,
-        ),
-      ),
-    ],
-  ),
-),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('imagens/logominimal.png', height: 100),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Profissionais',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Encontre o profissional ideal',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

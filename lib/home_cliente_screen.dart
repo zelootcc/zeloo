@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'mock_data.dart';
 import 'lista_profissionais_screen.dart';
+import 'perfil_screen.dart';
 
 const _gradientPrincipal = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -153,7 +154,8 @@ class _HomeClienteScreenState extends State<HomeClienteScreen>
         cor: const Color(0xFFFF6B35),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const ListaProfissionaisScreen()),
+          MaterialPageRoute(
+            builder: (_) => const ListaProfissionaisScreen()),
         ),
       ),
       _MenuCard(
@@ -177,7 +179,8 @@ class _HomeClienteScreenState extends State<HomeClienteScreen>
         cor: const Color(0xFF023E8A),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const ListaProfissionaisScreen()),
+          MaterialPageRoute(
+            builder: (_) => const ListaProfissionaisScreen()),
         ),
       ),
     ];
