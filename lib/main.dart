@@ -324,7 +324,7 @@ class _BannerHero extends StatelessWidget {
   final TextEditingController searchCtrl;
 
   const _BannerHero({required this.searchCtrl});
-
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
