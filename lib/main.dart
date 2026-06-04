@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'login.dart';
 import 'categorias_screen.dart';
 import 'dart:ui';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,8 +14,23 @@ void main() {
     ),
   );
   runApp(
-    const MaterialApp(debugShowCheckedModeBanner: false, home: HomePage()),
-  );
+  const MaterialApp(
+    debugShowCheckedModeBanner: false,
+
+    localizationsDelegates: [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+
+    supportedLocales: [
+      Locale('pt', 'BR'),
+      Locale('en', 'US'),
+    ],
+
+    home: HomePage(),
+  ),
+);
 }
 
 const _gradientPrincipal = LinearGradient(

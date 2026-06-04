@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'mock_data.dart';
 import 'lista_profissionais_screen.dart';
 import 'perfil_screen.dart';
+import 'pedidos_screen.dart';
 
 const _gradientPrincipal = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -154,8 +154,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen>
         cor: const Color(0xFFFF6B35),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => const ListaProfissionaisScreen()),
+          MaterialPageRoute(builder: (_) => const ListaProfissionaisScreen()),
         ),
       ),
       _MenuCard(
@@ -163,14 +162,20 @@ class _HomeClienteScreenState extends State<HomeClienteScreen>
         description: 'Suas informações pessoais',
         icon: Icons.person_rounded,
         cor: const Color(0xFF0077B6),
-        onTap: () {},
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PerfilScreen()),
+        ),
       ),
       _MenuCard(
         title: 'Meus Pedidos',
         description: 'Acompanhe seus serviços',
         icon: Icons.assignment_rounded,
         cor: const Color(0xFF00B4D8),
-        onTap: () {},
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PedidosScreen()),
+        ),
       ),
       _MenuCard(
         title: 'Buscar',
@@ -179,8 +184,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen>
         cor: const Color(0xFF023E8A),
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => const ListaProfissionaisScreen()),
+          MaterialPageRoute(builder: (_) => const ListaProfissionaisScreen()),
         ),
       ),
     ];

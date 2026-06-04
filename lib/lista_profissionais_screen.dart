@@ -50,7 +50,6 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
     _searchCtrl.addListener(
       () => setState(() => _query = _searchCtrl.text.toLowerCase()),
     );
-    // Se veio com profissional destaque, navega direto para o perfil
     if (widget.profissionalDestaque != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
@@ -85,7 +84,6 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
       backgroundColor: const Color(0xFFF4F7FB),
       body: CustomScrollView(
         slivers: [
-          // Header
           SliverAppBar(
             expandedHeight: 280,
             pinned: true,
@@ -140,7 +138,6 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
             ),
           ),
 
-          // Busca
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -173,7 +170,6 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
             ),
           ),
 
-          // Chips de filtro
           SliverToBoxAdapter(
             child: SizedBox(
               height: 54,
@@ -227,7 +223,6 @@ class _ListaProfissionaisScreenState extends State<ListaProfissionaisScreen> {
             ),
           ),
 
-          // Lista
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: _filtrados.isEmpty
@@ -433,11 +428,11 @@ class PerfilProfissionalScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
+      resizeToAvoidBottomInset: true,
       body: CustomScrollView(
         slivers: [
-          // Header com foto/avatar
           SliverAppBar(
-            expandedHeight: 180,
+            expandedHeight: 260,
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -525,7 +520,6 @@ class PerfilProfissionalScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Status + preço
                   Row(
                     children: [
                       Expanded(
@@ -551,10 +545,7 @@ class PerfilProfissionalScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
-                  // Localização
                   _InfoCard(
                     icon: Icons.location_on_rounded,
                     iconColor: const Color(0xFFFF6B35),
@@ -562,10 +553,7 @@ class PerfilProfissionalScreen extends StatelessWidget {
                     valor: profissional.cidade,
                     full: true,
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Sobre
                   const Text(
                     'Sobre',
                     style: TextStyle(
@@ -597,10 +585,7 @@ class PerfilProfissionalScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Avaliações mockadas
                   const Text(
                     'Avaliações recentes',
                     style: TextStyle(
@@ -621,10 +606,7 @@ class PerfilProfissionalScreen extends StatelessWidget {
                     nota: 4,
                     comentario: 'Bom serviço, resolvi o problema rapidamente.',
                   ),
-
                   const SizedBox(height: 28),
-
-                  // Botão agendar
                   if (profissional.disponivel)
                     Container(
                       width: double.infinity,
@@ -865,9 +847,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       );
       return;
     }
-
     setState(() => _loading = true);
-
     Future.delayed(const Duration(milliseconds: 1200), () {
       setState(() => _loading = false);
       _mostrarSucesso();
@@ -930,9 +910,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // fecha bottom sheet
-                  Navigator.pop(context); // volta para perfil
-                  Navigator.pop(context); // volta para lista
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -965,7 +945,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
+      resizeToAvoidBottomInset: true,
       body: CustomScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
           SliverAppBar(
             expandedHeight: 120,
@@ -1022,7 +1004,6 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Descrição do problema
                   _Label('Descreva o serviço necessário'),
                   const SizedBox(height: 8),
                   Container(
@@ -1051,10 +1032,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Seleção de data
                   _Label('Data'),
                   const SizedBox(height: 8),
                   GestureDetector(
@@ -1100,10 +1078,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Seleção de horário
                   _Label('Horário'),
                   const SizedBox(height: 10),
                   Wrap(
@@ -1142,10 +1117,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                       );
                     }).toList(),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Resumo de preço
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -1176,10 +1148,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 28),
-
-                  // Botão confirmar
                   Container(
                     width: double.infinity,
                     height: 54,
@@ -1215,7 +1184,6 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                             ),
                     ),
                   ),
-
                   const SizedBox(height: 32),
                 ],
               ),
