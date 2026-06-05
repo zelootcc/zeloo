@@ -137,7 +137,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen>
         decoration: const BoxDecoration(gradient: _gradientPrincipal),
         child: const Center(
           child: Text(
-            'Zeloo © 2025',
+            'Zeloo © 2026',
             style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ),
