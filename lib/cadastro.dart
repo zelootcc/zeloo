@@ -7,7 +7,7 @@ class CadastroScreen extends StatefulWidget {
   @override
   State<CadastroScreen> createState() => _CadastroScreenState();
 }
-
+ 
 class _CadastroScreenState extends State<CadastroScreen> {
   late bool _isPro;
 
