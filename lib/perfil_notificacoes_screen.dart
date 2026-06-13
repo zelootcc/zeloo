@@ -198,13 +198,6 @@ class _PerfilNotificacoesScreenState extends State<PerfilNotificacoesScreen>
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        _DivisorSecao('Autenticação em dois fatores'),
-        const SizedBox(height: 12),
-        _ItemToggleSimples(
-          titulo: 'Autenticação 2FA',
-          subtitulo: 'Código por SMS ao entrar',
-        ),
       ],
     );
   }
