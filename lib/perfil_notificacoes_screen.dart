@@ -390,24 +390,30 @@ class _CampoSenha extends StatelessWidget {
   }
 }
 
-Widget _DivisorSecao(String texto) {
-  return Row(
-    children: [
-      Expanded(child: Divider(color: Colors.grey[200])),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(
-          texto,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[400],
-            fontWeight: FontWeight.w600,
+class _DivisorSecao extends StatelessWidget {
+  final String texto;
+  const _DivisorSecao(this.texto);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: Colors.grey[200])),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            texto,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[400],
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-      ),
-      Expanded(child: Divider(color: Colors.grey[200])),
-    ],
-  );
+        Expanded(child: Divider(color: Colors.grey[200])),
+      ],
+    );
+  }
 }
 
 class _AppBarComTabs extends StatelessWidget implements PreferredSizeWidget {
