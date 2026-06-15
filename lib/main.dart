@@ -509,8 +509,8 @@ class _BannerHero extends StatelessWidget {
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                   ),
+                                  ),
                                 ),
-                              ),
                             ),
 
                             Container(
