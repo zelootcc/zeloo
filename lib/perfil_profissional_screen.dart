@@ -3,6 +3,7 @@ import 'mock_data_profissional.dart';
 import 'cadastro_perfil_profissional_screen.dart';
 import 'meus_servicos_screen.dart';
 import 'pedidos_profissional_screen.dart';
+import 'perfil_notificacoes_screen.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -110,14 +111,23 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
                     title: 'Notificações',
                     subtitle: 'Preferências de notificação',
                     cor: const Color(0xFFAB47BC),
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PerfilNotificacoesScreen()),
+                    ),
                   ),
                   _MenuCard(
                     icon: Icons.lock_outline_rounded,
                     title: 'Segurança',
                     subtitle: 'Senha e autenticação',
                     cor: const Color(0xFF023E8A),
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PerfilNotificacoesScreen(
+                              abaSeguranca: true)),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   _BotaoSair(context),
