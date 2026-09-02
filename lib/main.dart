@@ -4,9 +4,12 @@ import 'login.dart';
 import 'categorias_screen.dart';
 import 'dart:ui';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -14,23 +17,20 @@ void main() {
     ),
   );
   runApp(
-  const MaterialApp(
-    debugShowCheckedModeBanner: false,
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
 
-    localizationsDelegates: [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
 
-    supportedLocales: [
-      Locale('pt', 'BR'),
-      Locale('en', 'US'),
-    ],
+      supportedLocales: [Locale('pt', 'BR'), Locale('en', 'US')],
 
-    home: HomePage(),
-  ),
-);
+      home: HomePage(),
+    ),
+  );
 }
 
 const _gradientPrincipal = LinearGradient(
@@ -515,8 +515,8 @@ class _BannerHero extends StatelessWidget {
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                   ),
-                                  ),
                                 ),
+                              ),
                             ),
 
                             Container(

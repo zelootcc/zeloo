@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "728168922971",
+    "project_id": "zeloo-5aac7",
+    "storage_bucket": "zeloo-5aac7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:728168922971:android:56e440aed3c97c36aba47e",
+        "android_client_info": {
+          "package_name": "com.example.aplicativo_zeloo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIt-nyxcfu9ovHEETpny9QHuV4vK00ShQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

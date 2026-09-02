@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 
 class CadastroScreen extends StatefulWidget {
   final bool isProfissional;
@@ -107,7 +110,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
     return '${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4, d.length.clamp(0, 8))}';
   }
 
-  void _handleCadastrar() {
+  Future<void> _handleCadastrar() async {
     setState(() => _erro = '');
 
     if (_emailCtrl.text.isEmpty ||
@@ -139,14 +142,37 @@ class _CadastroScreenState extends State<CadastroScreen> {
     }
 
     setState(() => _loading = true);
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cadastro realizado com sucesso!')),
-      );
-      Navigator.pop(context);
+
+try {
+  await FirebaseFirestore.instance.collection('usuarios').add({
+    'email': _emailCtrl.text.trim(),
+    'telefone': _telefoneCtrl.text.trim(),
+    'nome': _nomeCtrl.text.trim(),
+    'cpfCnpj': _cpfCnpjCtrl.text.trim(),
+    'nascimento': _nascimentoCtrl.text.trim(),
+    'area': _areaCtrl.text.trim(),
+    'regiao': _regiaoCtrl.text.trim(),
+    'disponibilidade': _disponibilidadeCtrl.text.trim(),
+    'pagamento': _pagamentoCtrl.text.trim(),
+    'isPro': _isPro,
+    'criadoEm': Timestamp.now(),
+  });
+  if (!mounted) return;
+  setState(() => _loading = false);
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Cadastro realizado com sucesso!'),
+    ),
+  );
+  Navigator.pop(context);
+} catch (e) {
+  if (!mounted) return;
+  setState(() {
+    _loading = false;
+    _erro = 'Erro ao cadastrar: $e';
     });
   }
+}
 
   @override
   Widget build(BuildContext context) {
