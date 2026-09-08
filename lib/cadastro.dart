@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CadastroScreen extends StatefulWidget {
   final bool isProfissional;
@@ -10,7 +9,7 @@ class CadastroScreen extends StatefulWidget {
   @override
   State<CadastroScreen> createState() => _CadastroScreenState();
 }
- 
+
 class _CadastroScreenState extends State<CadastroScreen> {
   late bool _isPro;
 
@@ -143,36 +142,66 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
     setState(() => _loading = true);
 
-try {
-  await FirebaseFirestore.instance.collection('Clientes').add({
-    'email': _emailCtrl.text.trim(),
-    'telefone': _telefoneCtrl.text.trim(),
-    'nome': _nomeCtrl.text.trim(),
-    'cpfCnpj': _cpfCnpjCtrl.text.trim(),
-    'nascimento': _nascimentoCtrl.text.trim(),
-    'area': _areaCtrl.text.trim(),
-    'regiao': _regiaoCtrl.text.trim(),
-    'disponibilidade': _disponibilidadeCtrl.text.trim(),
-    'pagamento': _pagamentoCtrl.text.trim(),
-    'isPro': _isPro,
-    'criadoEm': Timestamp.now(),
-  });
-  if (!mounted) return;
-  setState(() => _loading = false);
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Cadastro realizado com sucesso!'),
-    ),
-  );
-  Navigator.pop(context);
-} catch (e) {
-  if (!mounted) return;
-  setState(() {
-    _loading = false;
-    _erro = 'Erro ao cadastrar: $e';
-    });
+    try {
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailCtrl.text.trim(),
+            password: _senhaCtrl.text,
+          );
+
+      final uid = credential.user!.uid;
+
+      final colecao = _isPro ? 'Profissionais' : 'Clientes';
+
+      await FirebaseFirestore.instance.collection(colecao).doc(uid).set({
+        'uid': uid,
+        'email': _emailCtrl.text.trim(),
+        'telefone': _telefoneCtrl.text.trim(),
+        'nome': _nomeCtrl.text.trim(),
+        'cpfCnpj': _cpfCnpjCtrl.text.trim(),
+        'nascimento': _nascimentoCtrl.text.trim(),
+        'area': _areaCtrl.text.trim(),
+        'regiao': _regiaoCtrl.text.trim(),
+        'disponibilidade': _disponibilidadeCtrl.text.trim(),
+        'pagamento': _pagamentoCtrl.text.trim(),
+        'isPro': _isPro,
+        'criadoEm': Timestamp.now(),
+      });
+
+      if (!mounted) return;
+
+      setState(() => _loading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cadastro realizado com sucesso!')),
+      );
+
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+
+        if (e.code == 'email-already-in-use') {
+          _erro = 'Este email já está cadastrado.';
+        } else if (e.code == 'invalid-email') {
+          _erro = 'Digite um email válido.';
+        } else if (e.code == 'weak-password') {
+          _erro = 'A senha é muito fraca.';
+        } else {
+          _erro = 'Erro ao criar conta: ${e.message}';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _erro = 'Erro ao cadastrar: $e';
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
