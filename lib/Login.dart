@@ -3,6 +3,7 @@ import 'cadastro.dart';
 import 'home_cliente_screen.dart';
 import 'home_profissional_screen.dart';
 import 'redefinir_senha_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

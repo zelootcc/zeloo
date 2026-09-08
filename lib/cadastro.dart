@@ -144,7 +144,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
     setState(() => _loading = true);
 
 try {
-  await FirebaseFirestore.instance.collection('usuarios').add({
+  await FirebaseFirestore.instance.collection('Clientes').add({
     'email': _emailCtrl.text.trim(),
     'telefone': _telefoneCtrl.text.trim(),
     'nome': _nomeCtrl.text.trim(),
