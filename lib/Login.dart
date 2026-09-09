@@ -4,6 +4,7 @@ import 'home_cliente_screen.dart';
 import 'home_profissional_screen.dart';
 import 'redefinir_senha_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,10 +19,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _senhaVisivel = false;
   bool _loading = false;
-  String _tipoUsuario = 'Cliente';
   String _erro = '';
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     setState(() {
       _erro = '';
     });
@@ -46,23 +46,78 @@ class _LoginScreenState extends State<LoginScreen> {
       _loading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      setState(() {
-        _loading = false;
-      });
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _senhaController.text,
+      );
 
-      if (_tipoUsuario == 'Profissional') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeProfissionalScreen()),
-        );
-      } else {
+      final uid = credential.user!.uid;
+
+      final docCliente = await FirebaseFirestore.instance
+          .collection('Clientes')
+          .doc(uid)
+          .get();
+
+      if (docCliente.exists) {
+        if (!mounted) return;
+        setState(() => _loading = false);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeClienteScreen()),
         );
+        return;
       }
-    });
+
+      final docProfissional = await FirebaseFirestore.instance
+          .collection('Profissionais')
+          .doc(uid)
+          .get();
+
+      if (docProfissional.exists) {
+        if (!mounted) return;
+        setState(() => _loading = false);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeProfissionalScreen()),
+        );
+        return;
+      }
+
+      await FirebaseAuth.instance.signOut();
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _erro = 'Conta não encontrada. Cadastre-se primeiro.';
+      });
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+
+        if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+          _erro = 'Email ou senha incorretos.';
+        } else if (e.code == 'wrong-password') {
+          _erro = 'Email ou senha incorretos.';
+        } else if (e.code == 'invalid-email') {
+          _erro = 'Digite um email válido.';
+        } else if (e.code == 'user-disabled') {
+          _erro = 'Esta conta foi desativada.';
+        } else if (e.code == 'too-many-requests') {
+          _erro = 'Muitas tentativas. Tente novamente mais tarde.';
+        } else {
+          _erro = 'Erro ao entrar: ${e.message}';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _erro = 'Erro ao entrar: $e';
+      });
+    }
   }
 
   @override
@@ -183,35 +238,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      'Entrar como',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _tipoUsuario,
-                          isExpanded: true,
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'Cliente',
-                              child: Text('Cliente'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Profissional',
-                              child: Text('Profissional'),
-                            ),
-                          ],
-                          onChanged: (v) => setState(() => _tipoUsuario = v!),
                         ),
                       ),
                     ),

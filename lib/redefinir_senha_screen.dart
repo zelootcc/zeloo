@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RedefinirSenhaScreen extends StatefulWidget {
   const RedefinirSenhaScreen({super.key});
@@ -13,7 +14,7 @@ class _RedefinirSenhaScreenState extends State<RedefinirSenhaScreen> {
   bool _enviado = false;
   String _erro = '';
 
-  void _handleEnviar() {
+  Future<void> _handleEnviar() async {
     setState(() => _erro = '');
 
     if (_emailController.text.isEmpty) {
@@ -29,12 +30,41 @@ class _RedefinirSenhaScreenState extends State<RedefinirSenhaScreen> {
 
     setState(() => _loading = true);
 
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: _emailController.text.trim(),
+      );
+
+      if (!mounted) return;
+
       setState(() {
         _loading = false;
         _enviado = true;
       });
-    });
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+
+        if (e.code == 'user-not-found') {
+          _erro = 'Não existe conta com este email.';
+        } else if (e.code == 'invalid-email') {
+          _erro = 'Digite um email válido.';
+        } else if (e.code == 'too-many-requests') {
+          _erro = 'Muitas tentativas. Tente novamente mais tarde.';
+        } else {
+          _erro = 'Erro ao enviar: ${e.message}';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _erro = 'Erro ao enviar: $e';
+      });
+    }
   }
 
   @override
