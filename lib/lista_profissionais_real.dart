@@ -39,60 +39,20 @@ class _ListaProfissionaisRealScreenState
   void initState() {
     super.initState();
     filtro = widget.filtroEspecialidade ?? 'Todos';
-    busca.addListener(() {
-      setState(() => query = busca.text.toLowerCase().trim());
+    busca.addListener(_atualizarBusca);
+  }
+
+  void _atualizarBusca() {
+    setState(() {
+      query = busca.text.toLowerCase().trim();
     });
   }
 
   @override
   void dispose() {
+    busca.removeListener(_atualizarBusca);
     busca.dispose();
     super.dispose();
-  }
-
-  ProfissionalModel converter(String id, Map<String, dynamic> dados) {
-    final valor = dados['precoHora'] ?? dados['valorHora'] ?? dados['preco'];
-    final preco = valor is num
-        ? valor.toDouble()
-        : double.tryParse(
-              valor?.toString().replaceAll(',', '.') ?? '',
-            ) ??
-            0;
-
-    final disponibilidade =
-        dados['disponibilidade']?.toString().toLowerCase() ?? '';
-
-    final disponivel = dados['disponivel'] is bool
-        ? dados['disponivel'] as bool
-        : disponibilidade.isEmpty ||
-            (!disponibilidade.contains('ocupado') &&
-                !disponibilidade.contains('indispon'));
-
-    final avaliacao = dados['avaliacao'] is num
-        ? (dados['avaliacao'] as num).toDouble()
-        : 0.0;
-
-    final totalAvaliacoes = dados['totalAvaliacoes'] is num
-        ? (dados['totalAvaliacoes'] as num).toInt()
-        : 0;
-
-    return ProfissionalModel(
-      id: id,
-      nome: dados['nome']?.toString() ?? 'Profissional',
-      especialidade: dados['area']?.toString() ??
-          dados['especialidade']?.toString() ??
-          'Serviço',
-      avaliacao: avaliacao,
-      totalAvaliacoes: totalAvaliacoes,
-      cidade: dados['regiao']?.toString() ??
-          dados['cidade']?.toString() ??
-          'Não informado',
-      descricao: dados['descricao']?.toString() ??
-          dados['descricaoProfissional']?.toString() ??
-          'Profissional cadastrado na Zeloo.',
-      precoHora: preco,
-      disponivel: disponivel,
-    );
   }
 
   @override
@@ -103,30 +63,45 @@ class _ListaProfissionaisRealScreenState
         stream: FirebaseService.profissionais(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           if (snapshot.hasError) {
             return Center(
-              child: Text(
-                'Erro ao carregar profissionais.\n${snapshot.error}',
-                textAlign: TextAlign.center,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Erro ao carregar profissionais.\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
               ),
             );
           }
 
           final lista = (snapshot.data?.docs ?? [])
-              .map((doc) => converter(doc.id, doc.data()))
+              .map(
+                (doc) => ProfissionalModel.fromFirestore(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
               .where((profissional) {
-            final nome = profissional.nome.toLowerCase();
-            final especialidade = profissional.especialidade.toLowerCase();
+                final nome = profissional.nome.toLowerCase();
+                final especialidade = profissional.especialidade.toLowerCase();
 
-            return (filtro == 'Todos' ||
-                    especialidade == filtro.toLowerCase()) &&
-                (query.isEmpty ||
+                final correspondeFiltro = filtro == 'Todos' ||
+                    especialidade == filtro.toLowerCase();
+
+                final correspondeBusca = query.isEmpty ||
                     nome.contains(query) ||
-                    especialidade.contains(query));
-          }).toList();
+                    especialidade.contains(query) ||
+                    profissional.cidade.toLowerCase().contains(query);
+
+                return correspondeFiltro && correspondeBusca;
+              })
+              .toList();
 
           return CustomScrollView(
             slivers: [
@@ -151,7 +126,7 @@ class _ListaProfissionaisRealScreenState
                   child: TextField(
                     controller: busca,
                     decoration: InputDecoration(
-                      hintText: 'Buscar por nome ou especialidade',
+                      hintText: 'Buscar por nome, serviço ou cidade',
                       prefixIcon: const Icon(Icons.search),
                       filled: true,
                       fillColor: Colors.white,
@@ -177,7 +152,9 @@ class _ListaProfissionaisRealScreenState
                       return ChoiceChip(
                         label: Text(item),
                         selected: filtro == item,
-                        onSelected: (_) => setState(() => filtro = item),
+                        onSelected: (_) {
+                          setState(() => filtro = item);
+                        },
                       );
                     },
                   ),
