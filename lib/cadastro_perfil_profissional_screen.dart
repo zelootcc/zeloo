@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'mock_data_profissional.dart';
+
+import 'firebase_service.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -17,35 +18,105 @@ class CadastroPerfilProfissionalScreen extends StatefulWidget {
 
 class _CadastroPerfilProfissionalScreenState
     extends State<CadastroPerfilProfissionalScreen> {
-  late final TextEditingController _nomeCtrl;
-  late final TextEditingController _especialidadeCtrl;
-  late final TextEditingController _regiaoCtrl;
-  late final TextEditingController _disponibilidadeCtrl;
-  late final TextEditingController _pagamentoCtrl;
-  late final TextEditingController _descricaoCtrl;
-  late final TextEditingController _precoCtrl;
+  final _nomeCtrl = TextEditingController();
+  final _areaCtrl = TextEditingController();
+  final _regiaoCtrl = TextEditingController();
+  final _disponibilidadeCtrl = TextEditingController();
+  final _pagamentoCtrl = TextEditingController();
+  final _descricaoCtrl = TextEditingController();
+  final _precoCtrl = TextEditingController();
 
-  bool _loading = false;
+  bool _loading = true;
+  bool _salvando = false;
 
   @override
   void initState() {
     super.initState();
-    _nomeCtrl = TextEditingController(text: ProfissionalLogado.nome);
-    _especialidadeCtrl =
-        TextEditingController(text: ProfissionalLogado.especialidade);
-    _regiaoCtrl = TextEditingController(text: ProfissionalLogado.regiao);
-    _disponibilidadeCtrl =
-        TextEditingController(text: ProfissionalLogado.disponibilidade);
-    _pagamentoCtrl = TextEditingController(text: ProfissionalLogado.pagamento);
-    _descricaoCtrl = TextEditingController(text: ProfissionalLogado.descricao);
-    _precoCtrl =
-        TextEditingController(text: ProfissionalLogado.precoHora.toInt().toString());
+    _carregarDados();
+  }
+
+  Future<void> _carregarDados() async {
+    try {
+      final documento = await FirebaseService.dadosProfissional();
+
+      if (documento == null || !documento.exists) {
+        throw Exception('Perfil profissional não encontrado.');
+      }
+
+      final dados = documento.data()!;
+
+      _nomeCtrl.text = dados['nome']?.toString() ?? '';
+      _areaCtrl.text = dados['area']?.toString() ?? '';
+      _regiaoCtrl.text = dados['regiao']?.toString() ?? '';
+      _disponibilidadeCtrl.text = dados['disponibilidade']?.toString() ?? '';
+      _pagamentoCtrl.text = dados['pagamento']?.toString() ?? '';
+      _descricaoCtrl.text = dados['descricao']?.toString() ?? '';
+      _precoCtrl.text = dados['precoHora']?.toString() ?? '';
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao carregar perfil: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _salvar() async {
+    if (_nomeCtrl.text.trim().isEmpty || _areaCtrl.text.trim().isEmpty) {
+      _snack('Preencha os campos obrigatórios.', erro: true);
+      return;
+    }
+
+    final preco = _precoCtrl.text.trim().isEmpty
+        ? 0.0
+        : double.tryParse(_precoCtrl.text.trim().replaceAll(',', '.'));
+
+    if (preco == null || preco < 0) {
+      _snack('Digite um valor por hora válido.', erro: true);
+      return;
+    }
+
+    setState(() => _salvando = true);
+
+    try {
+      await FirebaseService.atualizarUsuario({
+        'nome': _nomeCtrl.text.trim(),
+        'area': _areaCtrl.text.trim(),
+        'regiao': _regiaoCtrl.text.trim(),
+        'disponibilidade': _disponibilidadeCtrl.text.trim(),
+        'pagamento': _pagamentoCtrl.text.trim(),
+        'descricao': _descricaoCtrl.text.trim(),
+        'precoHora': preco,
+      });
+
+      if (!mounted) return;
+
+      _snack('Perfil atualizado com sucesso!');
+      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) _snack('Erro ao salvar perfil: $e', erro: true);
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
+  }
+
+  void _snack(String mensagem, {bool erro = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor:
+            erro ? const Color(0xFFE53E3E) : const Color(0xFF4CAF50),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _nomeCtrl.dispose();
-    _especialidadeCtrl.dispose();
+    _areaCtrl.dispose();
     _regiaoCtrl.dispose();
     _disponibilidadeCtrl.dispose();
     _pagamentoCtrl.dispose();
@@ -54,62 +125,30 @@ class _CadastroPerfilProfissionalScreenState
     super.dispose();
   }
 
-  void _salvar() {
-    if (_nomeCtrl.text.trim().isEmpty || _especialidadeCtrl.text.trim().isEmpty) {
-      _snack('Preencha os campos obrigatórios.', erro: true);
-      return;
-    }
-    setState(() => _loading = true);
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      ProfissionalLogado.nome = _nomeCtrl.text.trim();
-      ProfissionalLogado.especialidade = _especialidadeCtrl.text.trim();
-      ProfissionalLogado.regiao = _regiaoCtrl.text.trim();
-      ProfissionalLogado.disponibilidade = _disponibilidadeCtrl.text.trim();
-      ProfissionalLogado.pagamento = _pagamentoCtrl.text.trim();
-      ProfissionalLogado.descricao = _descricaoCtrl.text.trim();
-      ProfissionalLogado.precoHora =
-          double.tryParse(_precoCtrl.text.trim()) ?? ProfissionalLogado.precoHora;
-      setState(() => _loading = false);
-      _snack('Perfil atualizado com sucesso!');
-      Navigator.pop(context);
-    });
-  }
-
-  void _snack(String msg, {bool erro = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor:
-            erro ? const Color(0xFFE53E3E) : const Color(0xFF4CAF50),
-        behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final iniciais = ProfissionalLogado.nome
-        .trim()
-        .split(' ')
-        .where((p) => p.isNotEmpty)
-        .take(2)
-        .map((p) => p[0].toUpperCase())
-        .join();
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF4F7FB),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 160,
+            expandedHeight: 150,
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.chevron_left_rounded,
-                  color: Colors.white, size: 28),
+              icon: const Icon(
+                Icons.chevron_left_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -121,154 +160,67 @@ class _CadastroPerfilProfissionalScreenState
                     bottomRight: Radius.circular(32),
                   ),
                 ),
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 16),
-                      Stack(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(24),
-                              border:
-                                  Border.all(color: Colors.white38, width: 2),
-                            ),
-                            child: Center(
-                              child: Text(
-                                iniciais,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 26,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: const Color(0xFF00C6D7), width: 1.5),
-                              ),
-                              child: const Icon(Icons.edit_rounded,
-                                  size: 14, color: Color(0xFF0077B6)),
-                            ),
-                          ),
-                        ],
+                child: const SafeArea(
+                  child: Center(
+                    child: Text(
+                      'Editar perfil profissional',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                       ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Crie seu perfil profissional',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        '(*) campos obrigatórios',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Secao('Informações Básicas'),
+                  const _Secao('Informações Básicas'),
                   const SizedBox(height: 14),
-                  _Label('Nome de preferência *'),
-                  const SizedBox(height: 8),
-                  _Campo(
-                    controller: _nomeCtrl,
-                    hint: 'Como quer ser chamado',
-                    icon: Icons.person_outline_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  _Label('Área de atuação *'),
-                  const SizedBox(height: 8),
-                  _Campo(
-                    controller: _especialidadeCtrl,
-                    hint: 'Ex.: Mecânico, Eletricista, Encanador...',
-                    icon: Icons.work_outline_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  _Label('Região de atendimento *'),
-                  const SizedBox(height: 8),
-                  _Campo(
-                    controller: _regiaoCtrl,
-                    hint: 'Ex.: São José dos Campos (SP) - Jd. Satélite',
-                    icon: Icons.location_on_outlined,
-                  ),
-                  const SizedBox(height: 28),
-
-                  _Secao('Sobre o Trabalho'),
-                  const SizedBox(height: 14),
-                  _Label('Disponibilidade *'),
-                  const SizedBox(height: 8),
-                  _Campo(
-                    controller: _disponibilidadeCtrl,
-                    hint: 'Ex.: Segunda - Sexta; 08:00 - 19:00',
-                    icon: Icons.schedule_outlined,
-                  ),
-                  const SizedBox(height: 16),
-                  _Label('Opções de Pagamento *'),
-                  const SizedBox(height: 8),
-                  _Campo(
-                    controller: _pagamentoCtrl,
-                    hint: 'Ex.: PIX, Dinheiro, Cartões, Boleto...',
-                    icon: Icons.payments_outlined,
-                  ),
-                  const SizedBox(height: 16),
-                  _Label('Valor por hora (R\$)'),
-                  const SizedBox(height: 8),
-                  _Campo(
-                    controller: _precoCtrl,
-                    hint: 'Ex.: 80',
-                    icon: Icons.attach_money_rounded,
-                    tipo: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  _Label('Descrição / Bio'),
-                  const SizedBox(height: 8),
-                  _CampoMultilinha(
-                    controller: _descricaoCtrl,
-                    hint:
-                        'Conte um pouco sobre sua experiência e habilidades...',
-                  ),
-                  const SizedBox(height: 28),
-
-                  _Secao('Portfólio'),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Adicione até 10 imagens do seu trabalho',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-                  ),
+                  _campo('Nome de preferência *', _nomeCtrl,
+                      Icons.person_outline_rounded),
+                  _campo('Área de atuação *', _areaCtrl,
+                      Icons.work_outline_rounded),
+                  _campo('Região de atendimento', _regiaoCtrl,
+                      Icons.location_on_outlined),
                   const SizedBox(height: 12),
-                  _PortfolioGrid(),
-                  const SizedBox(height: 36),
-
-                  _BotaoSalvar(loading: _loading, onTap: _salvar),
+                  const _Secao('Sobre o Trabalho'),
+                  const SizedBox(height: 14),
+                  _campo('Disponibilidade', _disponibilidadeCtrl,
+                      Icons.schedule_outlined),
+                  _campo('Opções de pagamento', _pagamentoCtrl,
+                      Icons.payments_outlined),
+                  _campo('Valor por hora (R\$)', _precoCtrl,
+                      Icons.attach_money_rounded,
+                      tipo: TextInputType.number),
+                  _campoMultilinha('Descrição / Bio', _descricaoCtrl),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _salvando ? null : _salvar,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0077B6),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: _salvando
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Salvar alterações',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                    ),
+                  ),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -278,10 +230,79 @@ class _CadastroPerfilProfissionalScreenState
       ),
     );
   }
+
+  Widget _campo(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    TextInputType tipo = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: controller,
+            keyboardType: tipo,
+            decoration: InputDecoration(
+              prefixIcon: Icon(icon, size: 20),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _campoMultilinha(
+    String label,
+    TextEditingController controller,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: 4,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _Secao extends StatelessWidget {
   final String titulo;
+
   const _Secao(this.titulo);
 
   @override
@@ -292,11 +313,7 @@ class _Secao extends StatelessWidget {
           width: 4,
           height: 18,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            gradient: _gradient,
             borderRadius: BorderRadius.circular(4),
           ),
         ),
@@ -310,231 +327,6 @@ class _Secao extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  final String text;
-  const _Label(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A2E),
-      ),
-    );
-  }
-}
-
-class _Campo extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final IconData icon;
-  final TextInputType tipo;
-
-  const _Campo({
-    required this.controller,
-    required this.hint,
-    required this.icon,
-    this.tipo = TextInputType.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: tipo,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-        prefixIcon: Icon(icon, color: Colors.grey[400], size: 20),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey[200]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF00C6D7), width: 2),
-        ),
-      ),
-    );
-  }
-}
-
-class _CampoMultilinha extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-
-  const _CampoMultilinha({required this.controller, required this.hint});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      maxLines: 4,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.all(16),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey[200]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF00C6D7), width: 2),
-        ),
-      ),
-    );
-  }
-}
-
-class _PortfolioGrid extends StatefulWidget {
-  @override
-  State<_PortfolioGrid> createState() => _PortfolioGridState();
-}
-
-class _PortfolioGridState extends State<_PortfolioGrid> {
-  final int _maxFotos = 10;
-
-  // Simula lista de fotos (strings de placeholder)
-  final List<String> _fotos = [];
-
-  void _adicionarFoto() {
-    if (_fotos.length >= _maxFotos) return;
-    setState(() => _fotos.add('foto_${_fotos.length + 1}'));
-  }
-
-  void _removerFoto(int index) {
-    setState(() => _fotos.removeAt(index));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1,
-      ),
-      itemCount: _fotos.length + (_fotos.length < _maxFotos ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == _fotos.length) {
-          // Botão adicionar
-          return GestureDetector(
-            onTap: _adicionarFoto,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: const Color(0xFF00C6D7).withOpacity(0.4),
-                    width: 1.5),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_photo_alternate_rounded,
-                      color: Colors.grey[400], size: 28),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_fotos.length}/$_maxFotos',
-                    style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        // Foto adicionada (placeholder)
-        return Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF00C6D7).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Center(
-                child: Icon(Icons.image_rounded,
-                    color: Color(0xFF0077B6), size: 32),
-              ),
-            ),
-            Positioned(
-              top: 4,
-              right: 4,
-              child: GestureDetector(
-                onTap: () => _removerFoto(index),
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE53E3E),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close_rounded,
-                      color: Colors.white, size: 14),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _BotaoSalvar extends StatelessWidget {
-  final bool loading;
-  final VoidCallback onTap;
-
-  const _BotaoSalvar({required this.loading, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: loading ? null : onTap,
-      child: Container(
-        width: double.infinity,
-        height: 54,
-        decoration: BoxDecoration(
-          gradient: loading ? null : const LinearGradient(
-            colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
-          ),
-          color: loading ? Colors.grey[300] : null,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2.5),
-                )
-              : const Text(
-                  'Continuar',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-        ),
-      ),
     );
   }
 }

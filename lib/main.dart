@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'login.dart';
+import 'Login.dart';
 import 'categorias_screen.dart';
 import 'dart:ui';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -325,7 +325,12 @@ class _HomePageState extends State<HomePage>
               ],
             ),
           ),
-          Positioned(left: 16, right: 16, bottom: 60, child: _BannerDestaque()),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 60,
+            child: _BannerDestaque(),
+          ),
         ],
       ),
       bottomNavigationBar: Container(
@@ -371,9 +376,7 @@ class _BannerHero extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-
           const SizedBox(height: 14),
-
           const Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -389,9 +392,7 @@ class _BannerHero extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 10),
-
           const Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -406,9 +407,7 @@ class _BannerHero extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -423,7 +422,10 @@ class _BannerHero extends StatelessWidget {
             ),
             child: TextField(
               controller: searchCtrl,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A2E)),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF1A1A2E),
+              ),
               decoration: InputDecoration(
                 hintText: 'Buscar serviços...',
                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
@@ -451,9 +453,7 @@ class _BannerHero extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 14),
-
           GestureDetector(
             onTap: () => mostrarAlertaConta(context),
             child: Container(
@@ -479,9 +479,7 @@ class _BannerHero extends StatelessWidget {
                       size: 20,
                     ),
                   ),
-
                   const SizedBox(width: 12),
-
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,9 +492,7 @@ class _BannerHero extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-
                         const SizedBox(height: 4),
-
                         Stack(
                           alignment: Alignment.centerLeft,
                           children: [
@@ -518,7 +514,6 @@ class _BannerHero extends StatelessWidget {
                                 ),
                               ),
                             ),
-
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -553,9 +548,7 @@ class _BannerHero extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(width: 8),
-
                   const Icon(
                     Icons.keyboard_arrow_down_rounded,
                     color: Colors.white70,
@@ -572,6 +565,7 @@ class _BannerHero extends StatelessWidget {
 
 class _CardItem extends StatefulWidget {
   final MenuCard card;
+
   const _CardItem({required this.card});
 
   @override
@@ -614,7 +608,11 @@ class _CardItemState extends State<_CardItem> {
                   color: widget.card.cor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(widget.card.icon, color: widget.card.cor, size: 28),
+                child: Icon(
+                  widget.card.icon,
+                  color: widget.card.cor,
+                  size: 28,
+                ),
               ),
               const Spacer(),
               Text(

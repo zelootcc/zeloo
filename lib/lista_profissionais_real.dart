@@ -1,19 +1,252 @@
 import 'package:flutter/material.dart';
+
+import 'agendamento_screen.dart';
 import 'firebase_service.dart';
-import 'mock_data.dart';
-import 'lista_profissionais_screen.dart';
+import 'profissional_model.dart';
 
 class ListaProfissionaisRealScreen extends StatefulWidget {
   final String? filtroEspecialidade;
-  const ListaProfissionaisRealScreen({super.key, this.filtroEspecialidade});
-  @override State<ListaProfissionaisRealScreen> createState()=>_ListaRealState();
+
+  const ListaProfissionaisRealScreen({
+    super.key,
+    this.filtroEspecialidade,
+  });
+
+  @override
+  State<ListaProfissionaisRealScreen> createState() =>
+      _ListaProfissionaisRealScreenState();
 }
-class _ListaRealState extends State<ListaProfissionaisRealScreen>{
-  final busca=TextEditingController(); String query=''; late String filtro;
-  static const filtros=['Todos','Eletricista','Encanador','Limpeza','Mecânico','Pintor','Jardineiro','Marceneiro','Serviços Gerais'];
-  @override void initState(){super.initState();filtro=widget.filtroEspecialidade??'Todos';busca.addListener(()=>setState(()=>query=busca.text.toLowerCase().trim()));}
-  @override void dispose(){busca.dispose();super.dispose();}
-  MockProfissional converter(String id,Map<String,dynamic> p){final v=p['precoHora']??p['valorHora']??p['preco'];final preco=v is num?v.toDouble():double.tryParse(v?.toString().replaceAll(',','.')??'')??0;final d=p['disponibilidade']?.toString().toLowerCase()??'';return MockProfissional(id:id,nome:p['nome']?.toString()??'Profissional',especialidade:p['area']?.toString()??p['especialidade']?.toString()??'Serviço',avaliacao:(p['avaliacao'] is num?p['avaliacao']:0).toDouble(),totalAvaliacoes:(p['totalAvaliacoes'] is num?p['totalAvaliacoes']:0).toInt(),cidade:p['regiao']?.toString()??p['cidade']?.toString()??'Não informado',descricao:p['descricao']?.toString()??p['descricaoProfissional']?.toString()??'Profissional cadastrado na Zeloo.',precoHora:preco,disponivel:d.isEmpty||(!d.contains('ocupado')&&!d.contains('indis')));}
-  @override Widget build(BuildContext context)=>Scaffold(backgroundColor:const Color(0xFFF4F7FB),body:StreamBuilder(stream:FirebaseService.profissionais(),builder:(context,s){if(s.connectionState==ConnectionState.waiting)return const Center(child:CircularProgressIndicator());if(s.hasError)return Center(child:Text('Erro ao carregar profissionais.\n${s.error}',textAlign:TextAlign.center));final lista=(s.data?.docs??[]).map((d)=>converter(d.id,d.data())).where((p){final n=p.nome.toLowerCase(),a=p.especialidade.toLowerCase();return(filtro=='Todos'||a==filtro.toLowerCase())&&(query.isEmpty||n.contains(query)||a.contains(query));}).toList();return CustomScrollView(slivers:[SliverAppBar(expandedHeight:190,pinned:true,backgroundColor:const Color(0xFF0077B6),leading:IconButton(icon:const Icon(Icons.arrow_back_ios_new,color:Colors.white),onPressed:()=>Navigator.pop(context)),flexibleSpace:const FlexibleSpaceBar(title:Text('Profissionais'))),SliverToBoxAdapter(child:Padding(padding:const EdgeInsets.all(20),child:TextField(controller:busca,decoration:InputDecoration(hintText:'Buscar por nome ou especialidade',prefixIcon:const Icon(Icons.search),filled:true,fillColor:Colors.white,border:OutlineInputBorder(borderSide:BorderSide.none,borderRadius:BorderRadius.all(Radius.circular(16)))))),),SliverToBoxAdapter(child:SizedBox(height:52,child:ListView.separated(scrollDirection:Axis.horizontal,padding:const EdgeInsets.symmetric(horizontal:20,vertical:8),itemCount:filtros.length,separatorBuilder:(_,__)=>const SizedBox(width:8),itemBuilder:(_,i){final f=filtros[i];return ChoiceChip(label:Text(f),selected:filtro==f,onSelected:(_)=>setState(()=>filtro=f));}))),lista.isEmpty?const SliverFillRemaining(child:Center(child:Text('Nenhum profissional encontrado.'))):SliverPadding(padding:const EdgeInsets.symmetric(horizontal:20),sliver:SliverList(delegate:SliverChildBuilderDelegate((_,i)=>_Card(p:lista[i]),childCount:lista.length))) ]); }));
+
+class _ListaProfissionaisRealScreenState
+    extends State<ListaProfissionaisRealScreen> {
+  final busca = TextEditingController();
+  String query = '';
+  late String filtro;
+
+  static const filtros = [
+    'Todos',
+    'Eletricista',
+    'Encanador',
+    'Limpeza',
+    'Mecânico',
+    'Pintor',
+    'Jardineiro',
+    'Marceneiro',
+    'Serviços Gerais',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    filtro = widget.filtroEspecialidade ?? 'Todos';
+    busca.addListener(() {
+      setState(() => query = busca.text.toLowerCase().trim());
+    });
+  }
+
+  @override
+  void dispose() {
+    busca.dispose();
+    super.dispose();
+  }
+
+  ProfissionalModel converter(String id, Map<String, dynamic> dados) {
+    final valor = dados['precoHora'] ?? dados['valorHora'] ?? dados['preco'];
+    final preco = valor is num
+        ? valor.toDouble()
+        : double.tryParse(
+              valor?.toString().replaceAll(',', '.') ?? '',
+            ) ??
+            0;
+
+    final disponibilidade =
+        dados['disponibilidade']?.toString().toLowerCase() ?? '';
+
+    final disponivel = dados['disponivel'] is bool
+        ? dados['disponivel'] as bool
+        : disponibilidade.isEmpty ||
+            (!disponibilidade.contains('ocupado') &&
+                !disponibilidade.contains('indispon'));
+
+    final avaliacao = dados['avaliacao'] is num
+        ? (dados['avaliacao'] as num).toDouble()
+        : 0.0;
+
+    final totalAvaliacoes = dados['totalAvaliacoes'] is num
+        ? (dados['totalAvaliacoes'] as num).toInt()
+        : 0;
+
+    return ProfissionalModel(
+      id: id,
+      nome: dados['nome']?.toString() ?? 'Profissional',
+      especialidade: dados['area']?.toString() ??
+          dados['especialidade']?.toString() ??
+          'Serviço',
+      avaliacao: avaliacao,
+      totalAvaliacoes: totalAvaliacoes,
+      cidade: dados['regiao']?.toString() ??
+          dados['cidade']?.toString() ??
+          'Não informado',
+      descricao: dados['descricao']?.toString() ??
+          dados['descricaoProfissional']?.toString() ??
+          'Profissional cadastrado na Zeloo.',
+      precoHora: preco,
+      disponivel: disponivel,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FB),
+      body: StreamBuilder(
+        stream: FirebaseService.profissionais(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Erro ao carregar profissionais.\n${snapshot.error}',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+
+          final lista = (snapshot.data?.docs ?? [])
+              .map((doc) => converter(doc.id, doc.data()))
+              .where((profissional) {
+            final nome = profissional.nome.toLowerCase();
+            final especialidade = profissional.especialidade.toLowerCase();
+
+            return (filtro == 'Todos' ||
+                    especialidade == filtro.toLowerCase()) &&
+                (query.isEmpty ||
+                    nome.contains(query) ||
+                    especialidade.contains(query));
+          }).toList();
+
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 190,
+                pinned: true,
+                backgroundColor: const Color(0xFF0077B6),
+                leading: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                flexibleSpace: const FlexibleSpaceBar(
+                  title: Text('Profissionais'),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: TextField(
+                    controller: busca,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por nome ou especialidade',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 52,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: filtros.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, index) {
+                      final item = filtros[index];
+
+                      return ChoiceChip(
+                        label: Text(item),
+                        selected: filtro == item,
+                        onSelected: (_) => setState(() => filtro = item),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              if (lista.isEmpty)
+                const SliverFillRemaining(
+                  child: Center(
+                    child: Text('Nenhum profissional encontrado.'),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, index) => _CardProfissional(
+                        profissional: lista[index],
+                      ),
+                      childCount: lista.length,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
-class _Card extends StatelessWidget{final MockProfissional p;const _Card({required this.p});@override Widget build(BuildContext c)=>Card(child:ListTile(contentPadding:const EdgeInsets.all(12),leading:const CircleAvatar(child:Icon(Icons.person)),title:Text(p.nome,style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:Text('${p.especialidade}\n${p.cidade}'),trailing:Text(p.disponivel?'Disponível':'Ocupado',style:TextStyle(color:p.disponivel?Colors.green:Colors.grey)),onTap:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>PerfilProfissionalScreen(profissional:p))));}
+
+class _CardProfissional extends StatelessWidget {
+  final ProfissionalModel profissional;
+
+  const _CardProfissional({required this.profissional});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(12),
+        leading: const CircleAvatar(
+          child: Icon(Icons.person),
+        ),
+        title: Text(
+          profissional.nome,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          '${profissional.especialidade}\n${profissional.cidade}',
+        ),
+        trailing: Text(
+          profissional.disponivel ? 'Disponível' : 'Ocupado',
+          style: TextStyle(
+            color: profissional.disponivel ? Colors.green : Colors.grey,
+          ),
+        ),
+        onTap: profissional.disponivel
+            ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AgendamentoScreen(
+                      profissional: profissional,
+                    ),
+                  ),
+                )
+            : null,
+      ),
+    );
+  }
+}
