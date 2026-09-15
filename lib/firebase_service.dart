@@ -76,7 +76,6 @@ class FirebaseService {
   ) {
     return _servicos
         .where('profissionalId', isEqualTo: profissionalId)
-        .where('ativo', isEqualTo: true)
         .snapshots();
   }
 
