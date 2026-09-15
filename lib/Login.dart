@@ -2,12 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'cadastro.dart';
+import 'cadastro_real.dart';
 import 'home_profissional_screen.dart';
 import 'redefinir_senha_screen.dart';
 import 'shell_cliente.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -57,20 +55,18 @@ class _LoginState extends State<LoginScreen> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (_) => const ClienteShell(),
-            ),
+            MaterialPageRoute(builder: (_) => const ClienteShell()),
           );
         }
         return;
       }
 
-      final pro = await FirebaseFirestore.instance
+      final profissional = await FirebaseFirestore.instance
           .collection('Profissionais')
           .doc(uid)
           .get();
 
-      if (pro.exists) {
+      if (profissional.exists) {
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -85,28 +81,26 @@ class _LoginState extends State<LoginScreen> {
       await FirebaseAuth.instance.signOut();
 
       if (mounted) {
-        setState(
-          () => erro = 'Conta não encontrada. Cadastre-se primeiro.',
-        );
+        setState(() => erro = 'Conta não encontrada. Cadastre-se primeiro.');
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        setState(
-          () => erro = e.code == 'user-not-found' ||
+        setState(() {
+          erro = e.code == 'user-not-found' ||
                   e.code == 'invalid-credential' ||
                   e.code == 'wrong-password'
               ? 'Email ou senha incorretos.'
-              : 'Erro ao entrar: ${e.message}',
-        );
+              : 'Erro ao entrar: ${e.message}';
+        });
       }
     } catch (e) {
       if (mounted) {
         setState(() => erro = 'Erro ao entrar: $e');
       }
-    }
-
-    if (mounted) {
-      setState(() => loading = false);
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -118,189 +112,162 @@ class _LoginState extends State<LoginScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: const Color(0xFFF7F9FC),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                IconButton(
-                  alignment: Alignment.centerLeft,
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                  onPressed: () => Navigator.pop(context),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FC),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              IconButton(
+                alignment: Alignment.centerLeft,
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: Image.asset(
+                  'assets/imagens/logo.png',
+                  width: 110,
+                  height: 110,
                 ),
-
-                const SizedBox(height: 10),
-
-                Center(
-                  child: Image.asset(
-                    'assets/imagens/logo.png',
-                    width: 110,
-                    height: 110,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Bem-vindo',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Entre na sua conta para continuar',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF666666),
+                ),
+              ),
+              const SizedBox(height: 36),
+              const Text(
+                'Email',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  'Bem-vindo',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Senha',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: senha,
+                obscureText: !visivel,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      visivel ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () => setState(() => visivel = !visivel),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
                   ),
                 ),
-
-                const SizedBox(height: 8),
-
-                const Text(
-                  'Entre na sua conta para continuar',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF666666),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const RedefinirSenhaScreen(),
+                    ),
+                  ),
+                  child: const Text(
+                    'Esqueci minha senha',
+                    style: TextStyle(color: Color(0xFF00B4D8)),
                   ),
                 ),
-
-                const SizedBox(height: 36),
-
-                const Text(
-                  'Email',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
+              ),
+              if (erro.isNotEmpty)
+                Text(
+                  erro,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 13,
                   ),
                 ),
-
-                const SizedBox(height: 6),
-
-                TextField(
-                  controller: email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: loading ? null : entrar,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0077B6),
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
                     ),
                   ),
+                  child: loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Entrar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
-
-                const SizedBox(height: 18),
-
-                const Text(
-                  'Senha',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                TextField(
-                  controller: senha,
-                  obscureText: !visivel,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.visibility),
-                      onPressed: () =>
-                          setState(() => visivel = !visivel),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.push(
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Não tem uma conta? '),
+                  GestureDetector(
+                    onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const RedefinirSenhaScreen(),
+                        builder: (_) => const CadastroScreen(),
                       ),
                     ),
                     child: const Text(
-                      'Esqueci minha senha',
+                      'Cadastre-se',
                       style: TextStyle(
                         color: Color(0xFF00B4D8),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                ),
-
-                if (erro.isNotEmpty)
-                  Text(
-                    erro,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 13,
-                    ),
-                  ),
-
-                const SizedBox(height: 24),
-
-                SizedBox(
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: loading ? null : entrar,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0077B6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: loading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                        : const Text(
-                            'Entrar',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Não tem uma conta? '),
-
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CadastroScreen(),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cadastre-se',
-                        style: TextStyle(
-                          color: Color(0xFF00B4D8),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
+  }
 }
- 
