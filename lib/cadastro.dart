@@ -11,6 +11,36 @@ class CadastroScreen extends StatefulWidget {
 }
 
 class _CadastroScreenState extends State<CadastroScreen> {
+  String? _areaSelecionada;
+  String? _disponibilidadeSelecionada;
+  String? _pagamentoSelecionado;
+
+  final List<String> _areasDisponiveis = [
+    'Eletricista',
+    'Encanador',
+    'Mecânico',
+    'Pintor',
+    'Diarista',
+    'Jardineiro',
+    'Marceneiro',
+    'Pedreiro',
+  ];
+
+  final List<String> _disponibilidadesDisponiveis = [
+    'Segunda a Sexta, 8h–18h',
+    'Segunda a Sábado, 8h–18h',
+    'Finais de semana',
+    'Período integral (todos os dias)',
+    'Sob consulta',
+  ];
+
+  final List<String> _pagamentosDisponiveis = [
+    'PIX',
+    'Dinheiro',
+    'Cartão de Crédito',
+    'Cartão de Débito',
+    'Boleto',
+  ];
   late bool _isPro;
 
   final _emailCtrl = TextEditingController();
@@ -608,10 +638,12 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
         _label('Área de atuação *'),
         const SizedBox(height: 6),
-        _buildField(
-          controller: _areaCtrl,
-          prefixIcon: Icons.work_outline,
-          hint: 'Ex.: Eletricista, Mecânico...',
+        _buildDropdown(
+          value: _areaSelecionada,
+          hint: 'Selecione sua área',
+          icon: Icons.work_outline,
+          items: _areasDisponiveis,
+          onChanged: (v) => setState(() => _areaSelecionada = v),
         ),
         const SizedBox(height: 16),
 
@@ -626,22 +658,59 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
         _label('Disponibilidade'),
         const SizedBox(height: 6),
-        _buildField(
-          controller: _disponibilidadeCtrl,
-          prefixIcon: Icons.schedule_outlined,
-          hint: 'Ex.: Segunda a Sexta, 8h–18h',
+        _buildDropdown(
+          value: _disponibilidadeSelecionada,
+          hint: 'Selecione sua disponibilidade',
+          icon: Icons.schedule_outlined,
+          items: _disponibilidadesDisponiveis,
+          onChanged: (v) => setState(() => _disponibilidadeSelecionada = v),
         ),
         const SizedBox(height: 16),
 
         _label('Formas de pagamento'),
         const SizedBox(height: 6),
-        _buildField(
-          controller: _pagamentoCtrl,
-          prefixIcon: Icons.payments_outlined,
-          hint: 'Ex.: PIX, Dinheiro, Cartão',
+        _buildDropdown(
+          value: _pagamentoSelecionado,
+          hint: 'Selecione a forma de pagamento',
+          icon: Icons.payments_outlined,
+          items: _pagamentosDisponiveis,
+          onChanged: (v) => setState(() => _pagamentoSelecionado = v),
         ),
         const SizedBox(height: 20),
       ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String hint,
+    required IconData icon,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+        filled: true,
+        fillColor: const Color(0xFFE8E8E8),
+        prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 20),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF00B4D8), width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+      ),
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .toList(),
+      onChanged: onChanged,
     );
   }
 
