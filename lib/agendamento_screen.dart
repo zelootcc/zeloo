@@ -30,7 +30,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       initialDate: DateTime.now(),
     );
 
-    if (data != null) setState(() => _data = data);
+    if (data != null) {
+      setState(() => _data = data);
+    }
   }
 
   Future<void> _selecionarHorario() async {
@@ -39,7 +41,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       initialTime: TimeOfDay.now(),
     );
 
-    if (horario != null) setState(() => _horario = horario);
+    if (horario != null) {
+      setState(() => _horario = horario);
+    }
   }
 
   String _formatarData(DateTime data) {
@@ -54,7 +58,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         _data == null ||
         _horario == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preencha serviço, data e horário.')),
+        const SnackBar(
+          content: Text('Preencha serviço, data e horário.'),
+        ),
       );
       return;
     }
@@ -93,12 +99,45 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
+  }
+
+  Widget _info(String titulo, String valor, IconData icone) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icone, color: const Color(0xFF0077B6), size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                titulo,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                valor,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final profissional = widget.profissional;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
       appBar: AppBar(
@@ -107,9 +146,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder(
-        stream: FirebaseService.meusServicosDoProfissional(
-          widget.profissional.id,
-        ),
+        stream: FirebaseService.meusServicosDoProfissional(profissional.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -124,25 +161,82 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
             );
           }
 
-          final servicos = (snapshot.data?.docs ?? []).where((doc) {
-            final dados = doc.data() as Map<String, dynamic>;
-            return dados['ativo'] != false;
-          }).toList();
+          final servicos = snapshot.data?.docs ?? [];
 
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              Text(
-                widget.profissional.nome,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 28,
+                            child: Icon(Icons.person, size: 30),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profissional.nome,
+                                  style: const TextStyle(
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  profissional.especialidade,
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      _info(
+                        'Região',
+                        profissional.cidade,
+                        Icons.location_on_outlined,
+                      ),
+                      const SizedBox(height: 14),
+                      _info(
+                        'Avaliação',
+                        profissional.totalAvaliacoes == 0
+                            ? 'Ainda sem avaliações'
+                            : '${profissional.avaliacao.toStringAsFixed(1)} '
+                                '(${profissional.totalAvaliacoes} avaliações)',
+                        Icons.star_outline,
+                      ),
+                      const SizedBox(height: 14),
+                      _info(
+                        'Valor por hora',
+                        'R\$ ${profissional.precoHora.toStringAsFixed(2)}',
+                        Icons.attach_money,
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'Sobre o profissional',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        profissional.descricao,
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.profissional.especialidade,
-                style: TextStyle(color: Colors.grey[600]),
               ),
               const SizedBox(height: 24),
               const Text(
@@ -151,7 +245,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
               ),
               const SizedBox(height: 10),
               if (servicos.isEmpty)
-                const Text('Este profissional ainda não cadastrou serviços.')
+                const Text(
+                  'Este profissional ainda não cadastrou serviços ativos.',
+                )
               else
                 ...servicos.map((doc) {
                   final dados = doc.data() as Map<String, dynamic>;
