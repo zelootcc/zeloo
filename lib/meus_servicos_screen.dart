@@ -102,11 +102,16 @@ class _MeusServicosScreenState extends State<MeusServicosScreen> {
                     }
 
                     try {
+                      final profissional =
+                          await FirebaseService.dadosProfissional();
+                      final dados = profissional?.data() ?? {};
+                      final categoria = dados['area']?.toString() ?? 'Serviço';
+
                       await FirebaseService.adicionarServico(
                         titulo: titulo,
                         descricao: descCtrl.text.trim(),
                         preco: preco,
-                        categoria: 'Serviço',
+                        categoria: categoria,
                       );
 
                       if (ctx.mounted) Navigator.pop(ctx);
