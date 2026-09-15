@@ -49,7 +49,10 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
   }
 
   Future<void> _enviarPedido() async {
-    if (_servicoId == null || _servico == null || _data == null || _horario == null) {
+    if (_servicoId == null ||
+        _servico == null ||
+        _data == null ||
+        _horario == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preencha serviço, data e horário.')),
       );
@@ -104,17 +107,27 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder(
-        stream: FirebaseService.meusServicosDoProfissional(widget.profissional.id),
+        stream: FirebaseService.meusServicosDoProfissional(
+          widget.profissional.id,
+        ),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar serviços.\n${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Erro ao carregar serviços.\n${snapshot.error}',
+                textAlign: TextAlign.center,
+              ),
+            );
           }
 
-          final servicos = snapshot.data?.docs ?? [];
+          final servicos = (snapshot.data?.docs ?? []).where((doc) {
+            final dados = doc.data() as Map<String, dynamic>;
+            return dados['ativo'] != false;
+          }).toList();
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -162,7 +175,8 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       subtitle: Text(
-                        '${dados['descricao'] ?? 'Sem descrição'}\nR\$ ${preco.toStringAsFixed(2)}',
+                        '${dados['descricao'] ?? 'Sem descrição'}\n'
+                        'R\$ ${preco.toStringAsFixed(2)}',
                       ),
                       selected: selecionado,
                     ),
@@ -191,7 +205,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                 onPressed: _selecionarHorario,
                 icon: const Icon(Icons.schedule),
                 label: Text(
-                  _horario == null ? 'Escolher horário' : _horario!.format(context),
+                  _horario == null
+                      ? 'Escolher horário'
+                      : _horario!.format(context),
                 ),
               ),
               const SizedBox(height: 28),
