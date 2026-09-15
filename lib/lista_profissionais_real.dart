@@ -43,9 +43,7 @@ class _ListaProfissionaisRealScreenState
   }
 
   void _atualizarBusca() {
-    setState(() {
-      query = busca.text.toLowerCase().trim();
-    });
+    setState(() => query = busca.text.toLowerCase().trim());
   }
 
   @override
@@ -63,9 +61,7 @@ class _ListaProfissionaisRealScreenState
         stream: FirebaseService.profissionais(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -90,14 +86,14 @@ class _ListaProfissionaisRealScreenState
               .where((profissional) {
                 final nome = profissional.nome.toLowerCase();
                 final especialidade = profissional.especialidade.toLowerCase();
+                final cidade = profissional.cidade.toLowerCase();
 
                 final correspondeFiltro = filtro == 'Todos' ||
                     especialidade == filtro.toLowerCase();
-
                 final correspondeBusca = query.isEmpty ||
                     nome.contains(query) ||
                     especialidade.contains(query) ||
-                    profissional.cidade.toLowerCase().contains(query);
+                    cidade.contains(query);
 
                 return correspondeFiltro && correspondeBusca;
               })
@@ -195,24 +191,8 @@ class _CardProfissional extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading: const CircleAvatar(
-          child: Icon(Icons.person),
-        ),
-        title: Text(
-          profissional.nome,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          '${profissional.especialidade}\n${profissional.cidade}',
-        ),
-        trailing: Text(
-          profissional.disponivel ? 'Disponível' : 'Ocupado',
-          style: TextStyle(
-            color: profissional.disponivel ? Colors.green : Colors.grey,
-          ),
-        ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: profissional.disponivel
             ? () => Navigator.push(
                   context,
@@ -223,6 +203,93 @@ class _CardProfissional extends StatelessWidget {
                   ),
                 )
             : null,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 25,
+                    child: Icon(Icons.person),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          profissional.nome,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          profissional.especialidade,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    profissional.disponivel ? 'Disponível' : 'Ocupado',
+                    style: TextStyle(
+                      color: profissional.disponivel
+                          ? Colors.green
+                          : Colors.grey,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                profissional.descricao,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 17,
+                    color: Color(0xFF0077B6),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(child: Text(profissional.cidade)),
+                  const Icon(
+                    Icons.star_rounded,
+                    size: 18,
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    profissional.totalAvaliacoes == 0
+                        ? 'Novo'
+                        : profissional.avaliacao.toStringAsFixed(1),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'A partir de R\$ ${profissional.precoHora.toStringAsFixed(2)}/h',
+                style: const TextStyle(
+                  color: Color(0xFF0077B6),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
