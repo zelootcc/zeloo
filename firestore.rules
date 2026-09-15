@@ -10,22 +10,13 @@ service cloud.firestore {
       return autenticado() && request.auth.uid == uid;
     }
 
-    function participanteDoPedido() {
-      return autenticado() &&
-        (resource.data.clienteId == request.auth.uid ||
-         resource.data.profissionalId == request.auth.uid);
-    }
-
     match /Clientes/{uid} {
-      allow read: if donoDoPerfil(uid);
-      allow create: if donoDoPerfil(uid);
-      allow update, delete: if donoDoPerfil(uid);
+      allow read, create, update, delete: if donoDoPerfil(uid);
     }
 
     match /Profissionais/{uid} {
       allow read: if autenticado();
-      allow create: if donoDoPerfil(uid);
-      allow update, delete: if donoDoPerfil(uid);
+      allow create, update, delete: if donoDoPerfil(uid);
     }
 
     match /Servicos/{id} {
@@ -44,7 +35,23 @@ service cloud.firestore {
         (resource.data.clienteId == request.auth.uid ||
          resource.data.profissionalId == request.auth.uid);
 
-      allow update: if participanteDoPedido();
+      allow update: if autenticado() && (
+        (
+          resource.data.profissionalId == request.auth.uid &&
+          request.resource.data.clienteId == resource.data.clienteId &&
+          request.resource.data.profissionalId == resource.data.profissionalId &&
+          request.resource.data.servicoId == resource.data.servicoId &&
+          request.resource.data.status in ['aguardando', 'confirmado', 'cancelado', 'concluido']
+        ) ||
+        (
+          resource.data.clienteId == request.auth.uid &&
+          request.resource.data.clienteId == resource.data.clienteId &&
+          request.resource.data.profissionalId == resource.data.profissionalId &&
+          request.resource.data.servicoId == resource.data.servicoId &&
+          request.resource.data.status == 'cancelado'
+        )
+      );
+
       allow delete: if autenticado() &&
         resource.data.clienteId == request.auth.uid;
     }
