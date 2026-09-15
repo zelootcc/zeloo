@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'agendamento_screen.dart';
 import 'firebase_service.dart';
 import 'profissional_model.dart';
 
@@ -49,10 +50,7 @@ class _ListaProfissionaisRealScreenState
     super.dispose();
   }
 
-  ProfissionalModel converter(
-    String id,
-    Map<String, dynamic> dados,
-  ) {
+  ProfissionalModel converter(String id, Map<String, dynamic> dados) {
     final valor = dados['precoHora'] ?? dados['valorHora'] ?? dados['preco'];
     final preco = valor is num
         ? valor.toDouble()
@@ -193,7 +191,7 @@ class _ListaProfissionaisRealScreenState
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (_, index) => _CardProfissional(
@@ -237,7 +235,18 @@ class _CardProfissional extends StatelessWidget {
           style: TextStyle(
             color: profissional.disponivel ? Colors.green : Colors.grey,
           ),
-        ),      ),
+        ),
+        onTap: profissional.disponivel
+            ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AgendamentoScreen(
+                      profissional: profissional,
+                    ),
+                  ),
+                )
+            : null,
+      ),
     );
   }
 }
