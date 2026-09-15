@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function donoDoPerfil(uid) {
+      return autenticado() && request.auth.uid == uid;
+    }
+
+    function participanteDoPedido() {
+      return autenticado() &&
+        (resource.data.clienteId == request.auth.uid ||
+         resource.data.profissionalId == request.auth.uid);
+    }
+
+    match /Clientes/{uid} {
+      allow read: if donoDoPerfil(uid);
+      allow create: if donoDoPerfil(uid);
+      allow update, delete: if donoDoPerfil(uid);
+    }
+
+    match /Profissionais/{uid} {
+      allow read: if autenticado();
+      allow create: if donoDoPerfil(uid);
+      allow update, delete: if donoDoPerfil(uid);
+    }
+
+    match /Servicos/{id} {
+      allow read: if autenticado();
+      allow create: if autenticado() &&
+        request.resource.data.profissionalId == request.auth.uid;
+      allow update, delete: if autenticado() &&
+        resource.data.profissionalId == request.auth.uid;
+    }
+
+    match /Pedidos/{id} {
+      allow create: if autenticado() &&
+        request.resource.data.clienteId == request.auth.uid;
+
+      allow read: if autenticado() &&
+        (resource.data.clienteId == request.auth.uid ||
+         resource.data.profissionalId == request.auth.uid);
+
+      allow update: if participanteDoPedido();
+      allow delete: if autenticado() &&
+        resource.data.clienteId == request.auth.uid;
+    }
+  }
+}
