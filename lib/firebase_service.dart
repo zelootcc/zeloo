@@ -9,7 +9,6 @@ class FirebaseService {
 
   static Future<String?> colecaoUsuario() async {
     final uid = usuario?.uid;
-
     if (uid == null) return null;
 
     final cliente = await _db.collection('Clientes').doc(uid).get();
@@ -32,7 +31,6 @@ class FirebaseService {
 
   static Future<DocumentSnapshot<Map<String, dynamic>>?> dadosProfissional() async {
     final uid = usuario?.uid;
-
     if (uid == null) return null;
 
     return _db.collection('Profissionais').doc(uid).get();
@@ -42,23 +40,15 @@ class FirebaseService {
     final uid = usuario?.uid;
     final colecao = await colecaoUsuario();
 
-    if (uid == null) {
-      throw Exception('Usuário não autenticado.');
-    }
-
-    if (colecao == null) {
-      throw Exception('Perfil do usuário não encontrado.');
-    }
+    if (uid == null) throw Exception('Usuário não autenticado.');
+    if (colecao == null) throw Exception('Perfil do usuário não encontrado.');
 
     await _db.collection(colecao).doc(uid).update(dados);
   }
 
   static Future<void> atualizarDisponibilidade(bool disponivel) async {
     final uid = usuario?.uid;
-
-    if (uid == null) {
-      throw Exception('Usuário não autenticado.');
-    }
+    if (uid == null) throw Exception('Usuário não autenticado.');
 
     await _db.collection('Profissionais').doc(uid).update({
       'disponivel': disponivel,
@@ -74,11 +64,19 @@ class FirebaseService {
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> meusServicos() {
     final uid = usuario?.uid;
-
     if (uid == null) return const Stream.empty();
 
     return _servicos
         .where('profissionalId', isEqualTo: uid)
+        .snapshots();
+  }
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> meusServicosDoProfissional(
+    String profissionalId,
+  ) {
+    return _servicos
+        .where('profissionalId', isEqualTo: profissionalId)
+        .where('ativo', isEqualTo: true)
         .snapshots();
   }
 
@@ -89,10 +87,7 @@ class FirebaseService {
     required String categoria,
   }) async {
     final uid = usuario?.uid;
-
-    if (uid == null) {
-      throw Exception('Usuário não autenticado.');
-    }
+    if (uid == null) throw Exception('Usuário não autenticado.');
 
     await _servicos.add({
       'profissionalId': uid,
@@ -127,10 +122,7 @@ class FirebaseService {
     String descricao = '',
   }) async {
     final clienteId = usuario?.uid;
-
-    if (clienteId == null) {
-      throw Exception('Usuário não autenticado.');
-    }
+    if (clienteId == null) throw Exception('Usuário não autenticado.');
 
     final ref = await _db.collection('Pedidos').add({
       'clienteId': clienteId,
@@ -151,7 +143,6 @@ class FirebaseService {
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> meusPedidosCliente() {
     final uid = usuario?.uid;
-
     if (uid == null) return const Stream.empty();
 
     return _db
@@ -162,7 +153,6 @@ class FirebaseService {
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> meusPedidosProfissional() {
     final uid = usuario?.uid;
-
     if (uid == null) return const Stream.empty();
 
     return _db
@@ -175,9 +165,7 @@ class FirebaseService {
     String id,
     String status,
   ) {
-    return _db.collection('Pedidos').doc(id).update({
-      'status': status,
-    });
+    return _db.collection('Pedidos').doc(id).update({'status': status});
   }
 
   static Future<void> sair() {
