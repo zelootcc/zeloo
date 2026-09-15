@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'mock_data_profissional.dart';
+
+import 'firebase_service.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -15,18 +16,19 @@ class MeusServicosScreen extends StatefulWidget {
 }
 
 class _MeusServicosScreenState extends State<MeusServicosScreen> {
-  void _adicionarServico() {
+  Future<void> _adicionarServico() async {
     final tituloCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final precoCtrl = TextEditingController();
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: const BoxDecoration(
@@ -49,23 +51,28 @@ class _MeusServicosScreenState extends State<MeusServicosScreen> {
               const Text(
                 'Novo Serviço',
                 style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1A1A2E)),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1A1A2E),
+                ),
               ),
               const SizedBox(height: 20),
-              _LabelModal('Título *'),
-              const SizedBox(height: 8),
-              _CampoModal(controller: tituloCtrl, hint: 'Ex.: Instalação Elétrica'),
-              const SizedBox(height: 14),
-              _LabelModal('Descrição'),
+              const _LabelModal('Título *'),
               const SizedBox(height: 8),
               _CampoModal(
-                  controller: descCtrl,
-                  hint: 'Descreva o serviço oferecido',
-                  maxLines: 3),
+                controller: tituloCtrl,
+                hint: 'Ex.: Instalação Elétrica',
+              ),
               const SizedBox(height: 14),
-              _LabelModal('Valor por hora (R\$)'),
+              const _LabelModal('Descrição'),
+              const SizedBox(height: 8),
+              _CampoModal(
+                controller: descCtrl,
+                hint: 'Descreva o serviço oferecido',
+                maxLines: 3,
+              ),
+              const SizedBox(height: 14),
+              const _LabelModal('Valor por hora (R\$)'),
               const SizedBox(height: 8),
               _CampoModal(
                 controller: precoCtrl,
@@ -73,36 +80,56 @@ class _MeusServicosScreenState extends State<MeusServicosScreen> {
                 tipo: TextInputType.number,
               ),
               const SizedBox(height: 24),
-              GestureDetector(
-                onTap: () {
-                  if (tituloCtrl.text.trim().isEmpty) return;
-                  setState(() {
-                    servicosMock.add(MockServico(
-                      id: 'S${servicosMock.length + 1}',
-                      titulo: tituloCtrl.text.trim(),
-                      descricao: descCtrl.text.trim(),
-                      preco: double.tryParse(precoCtrl.text.trim()) ?? 0,
-                      categoria: ProfissionalLogado.especialidade,
-                    ));
-                  });
-                  Navigator.pop(ctx);
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final titulo = tituloCtrl.text.trim();
+                    final preco = double.tryParse(
+                      precoCtrl.text.trim().replaceAll(',', '.'),
+                    );
+
+                    if (titulo.isEmpty) return;
+
+                    if (preco == null || preco < 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Digite um valor válido.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      await FirebaseService.adicionarServico(
+                        titulo: titulo,
+                        descricao: descCtrl.text.trim(),
+                        preco: preco,
+                        categoria: 'Serviço',
+                      );
+
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    } catch (e) {
+                      if (!ctx.mounted) return;
+
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text('Erro ao adicionar: $e')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0077B6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Adicionar Serviço',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15),
+                  child: const Text(
+                    'Adicionar Serviço',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -113,130 +140,206 @@ class _MeusServicosScreenState extends State<MeusServicosScreen> {
         ),
       ),
     );
+
+    tituloCtrl.dispose();
+    descCtrl.dispose();
+    precoCtrl.dispose();
   }
 
-  void _remover(int index) {
-    setState(() => servicosMock.removeAt(index));
+  Future<void> _remover(String id) async {
+    try {
+      await FirebaseService.removerServico(id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao remover serviço: $e')),
+      );
+    }
+  }
+
+  Future<void> _alternarAtivo(String id, bool ativo) async {
+    try {
+      await FirebaseService.atualizarServico(id, {'ativo': !ativo});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao atualizar serviço: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 140,
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.chevron_left_rounded,
-                  color: Colors.white, size: 28),
-              onPressed: () => Navigator.pop(context),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: _gradient,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
-                  ),
-                ),
-                padding: const EdgeInsets.fromLTRB(24, 56, 24, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Meus Serviços',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Gerencie o que você oferece',
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.8), fontSize: 14),
-                    ),
-                  ],
+      body: StreamBuilder(
+        stream: FirebaseService.meusServicos(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Não foi possível carregar seus serviços.\n${snapshot.error}',
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          ),
+            );
+          }
 
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, i) => _CardServico(
-                  servico: servicosMock[i],
-                  onRemover: () => _remover(i),
-                  onToggleAtivo: () =>
-                      setState(() => servicosMock[i].ativo = !servicosMock[i].ativo),
-                ),
-                childCount: servicosMock.length,
-              ),
-            ),
-          ),
+          final servicos = snapshot.data?.docs ?? [];
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-              child: GestureDetector(
-                onTap: _adicionarServico,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 140,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(
+                    Icons.chevron_left_rounded,
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: const Color(0xFF00C6D7).withOpacity(0.4),
-                      width: 1.5,
+                    size: 28,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: const BoxDecoration(
+                      gradient: _gradient,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
+                      ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 56, 24, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Meus Serviços',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Gerencie o que você oferece',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_rounded,
-                          color: Color(0xFF0077B6), size: 20),
-                      SizedBox(width: 6),
-                      Text(
+                ),
+              ),
+              if (servicos.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text('Você ainda não possui serviços cadastrados.'),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final doc = servicos[index];
+                        final dados = doc.data() as Map<String, dynamic>;
+
+                        return _CardServico(
+                          dados: dados,
+                          onRemover: () => _remover(doc.id),
+                          onToggleAtivo: () => _alternarAtivo(
+                            doc.id,
+                            dados['ativo'] == true,
+                          ),
+                        );
+                      },
+                      childCount: servicos.length,
+                    ),
+                  ),
+                ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: _adicionarServico,
+                      icon: const Icon(
+                        Icons.add_rounded,
+                        color: Color(0xFF0077B6),
+                      ),
+                      label: const Text(
                         'Adicionar Serviço',
                         style: TextStyle(
                           color: Color(0xFF0077B6),
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
                         ),
                       ),
-                    ],
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: Color(0xFF00C6D7),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class _CardServico extends StatelessWidget {
-  final MockServico servico;
+  final Map<String, dynamic> dados;
   final VoidCallback onRemover;
   final VoidCallback onToggleAtivo;
 
   const _CardServico({
-    required this.servico,
+    required this.dados,
     required this.onRemover,
     required this.onToggleAtivo,
   });
 
+  String _texto(dynamic valor, [String padrao = 'Não informado']) {
+    if (valor == null || valor.toString().trim().isEmpty) return padrao;
+    return valor.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final titulo = _texto(dados['titulo'], 'Serviço');
+    final descricao = _texto(dados['descricao'], 'Sem descrição');
+    final preco = dados['preco'] is num
+        ? (dados['preco'] as num).toDouble()
+        : double.tryParse(
+              _texto(dados['preco'], '0').replaceAll(',', '.'),
+            ) ??
+            0;
+    final ativo = dados['ativo'] == true;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -261,8 +364,11 @@ class _CardServico extends StatelessWidget {
               color: const Color(0xFF00B4D8).withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.handyman_rounded,
-                color: Color(0xFF0077B6), size: 22),
+            child: const Icon(
+              Icons.handyman_rounded,
+              color: Color(0xFF0077B6),
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -273,7 +379,7 @@ class _CardServico extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        servico.titulo,
+                        titulo,
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
@@ -283,21 +389,21 @@ class _CardServico extends StatelessWidget {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: servico.ativo
+                        color: ativo
                             ? const Color(0xFF4CAF50).withOpacity(0.12)
                             : Colors.grey.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        servico.ativo ? 'Ativo' : 'Inativo',
+                        ativo ? 'Ativo' : 'Inativo',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: servico.ativo
-                              ? const Color(0xFF4CAF50)
-                              : Colors.grey,
+                          color: ativo ? const Color(0xFF4CAF50) : Colors.grey,
                         ),
                       ),
                     ),
@@ -305,12 +411,12 @@ class _CardServico extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  servico.descricao,
+                  descricao,
                   style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'R\$ ${servico.preco.toInt()}/h',
+                  'R\$ ${preco.toStringAsFixed(2)}/h',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -323,7 +429,7 @@ class _CardServico extends StatelessWidget {
                     GestureDetector(
                       onTap: onToggleAtivo,
                       child: Text(
-                        servico.ativo ? 'Desativar' : 'Ativar',
+                        ativo ? 'Desativar' : 'Ativar',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF0077B6),
@@ -334,8 +440,11 @@ class _CardServico extends StatelessWidget {
                     const Spacer(),
                     GestureDetector(
                       onTap: onRemover,
-                      child: const Icon(Icons.delete_outline_rounded,
-                          color: Color(0xFFE53E3E), size: 20),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Color(0xFFE53E3E),
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),
@@ -350,13 +459,17 @@ class _CardServico extends StatelessWidget {
 
 class _LabelModal extends StatelessWidget {
   final String text;
+
   const _LabelModal(this.text);
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
@@ -385,15 +498,20 @@ class _CampoModal extends StatelessWidget {
         hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
         filled: true,
         fillColor: const Color(0xFFF4F7FB),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey[200]!),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF00C6D7), width: 2),
+          borderSide: const BorderSide(
+            color: Color(0xFF00C6D7),
+            width: 2,
+          ),
         ),
       ),
     );
