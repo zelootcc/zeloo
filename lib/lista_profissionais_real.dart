@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'agendamento_screen.dart';
 import 'firebase_service.dart';
 import 'profissional_model.dart';
@@ -7,10 +6,7 @@ import 'profissional_model.dart';
 class ListaProfissionaisRealScreen extends StatefulWidget {
   final String? filtroEspecialidade;
 
-  const ListaProfissionaisRealScreen({
-    super.key,
-    this.filtroEspecialidade,
-  });
+  const ListaProfissionaisRealScreen({super.key, this.filtroEspecialidade});
 
   @override
   State<ListaProfissionaisRealScreen> createState() =>
@@ -77,20 +73,16 @@ class _ListaProfissionaisRealScreenState
           }
 
           final lista = (snapshot.data?.docs ?? [])
-              .map(
-                (doc) => ProfissionalModel.fromFirestore(
-                  doc.id,
-                  doc.data(),
-                ),
-              )
+              .map((doc) => ProfissionalModel.fromFirestore(doc.id, doc.data()))
               .where((profissional) {
                 final nome = profissional.nome.toLowerCase();
                 final especialidade = profissional.especialidade.toLowerCase();
                 final cidade = profissional.cidade.toLowerCase();
 
-                final correspondeFiltro = filtro == 'Todos' ||
-                    especialidade == filtro.toLowerCase();
-                final correspondeBusca = query.isEmpty ||
+                final correspondeFiltro =
+                    filtro == 'Todos' || especialidade == filtro.toLowerCase();
+                final correspondeBusca =
+                    query.isEmpty ||
                     nome.contains(query) ||
                     especialidade.contains(query) ||
                     cidade.contains(query);
@@ -105,6 +97,7 @@ class _ListaProfissionaisRealScreenState
                 expandedHeight: 190,
                 pinned: true,
                 backgroundColor: const Color(0xFF0077B6),
+
                 leading: IconButton(
                   icon: const Icon(
                     Icons.arrow_back_ios_new,
@@ -112,8 +105,25 @@ class _ListaProfissionaisRealScreenState
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
-                flexibleSpace: const FlexibleSpaceBar(
-                  title: Text('Profissionais'),
+
+                flexibleSpace: FlexibleSpaceBar(
+                  title: const Text(
+                    'Profissionais',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  background: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
+                      ),
+                    ),
+                  ),
                 ),
               ),
               SliverToBoxAdapter(
@@ -158,18 +168,15 @@ class _ListaProfissionaisRealScreenState
               ),
               if (lista.isEmpty)
                 const SliverFillRemaining(
-                  child: Center(
-                    child: Text('Nenhum profissional encontrado.'),
-                  ),
+                  child: Center(child: Text('Nenhum profissional encontrado.')),
                 )
               else
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (_, index) => _CardProfissional(
-                        profissional: lista[index],
-                      ),
+                      (_, index) =>
+                          _CardProfissional(profissional: lista[index]),
                       childCount: lista.length,
                     ),
                   ),
@@ -195,13 +202,11 @@ class _CardProfissional extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: profissional.disponivel
             ? () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AgendamentoScreen(
-                      profissional: profissional,
-                    ),
-                  ),
-                )
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AgendamentoScreen(profissional: profissional),
+                ),
+              )
             : null,
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -210,10 +215,7 @@ class _CardProfissional extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 25,
-                    child: Icon(Icons.person),
-                  ),
+                  const CircleAvatar(radius: 25, child: Icon(Icons.person)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -251,10 +253,7 @@ class _CardProfissional extends StatelessWidget {
                 profissional.descricao,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  height: 1.3,
-                ),
+                style: TextStyle(color: Colors.grey[700], height: 1.3),
               ),
               const SizedBox(height: 10),
               Row(
@@ -266,11 +265,7 @@ class _CardProfissional extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Expanded(child: Text(profissional.cidade)),
-                  const Icon(
-                    Icons.star_rounded,
-                    size: 18,
-                    color: Colors.amber,
-                  ),
+                  const Icon(Icons.star_rounded, size: 18, color: Colors.amber),
                   const SizedBox(width: 3),
                   Text(
                     profissional.totalAvaliacoes == 0

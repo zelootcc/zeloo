@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'perfil_editar_screen.dart';
 
 class _Endereco {
   String apelido;
@@ -42,8 +41,9 @@ class _PerfilEnderecosScreenState extends State<PerfilEnderecosScreen> {
         logradouroCtrl: logradouroCtrl,
         onSalvar: () {
           if (apelidoCtrl.text.trim().isEmpty ||
-              logradouroCtrl.text.trim().isEmpty)
+              logradouroCtrl.text.trim().isEmpty) {
             return;
+          }
           setState(() {
             _enderecos.add(
               _Endereco(
@@ -76,10 +76,10 @@ class _PerfilEnderecosScreenState extends State<PerfilEnderecosScreen> {
     return Scaffold(
       
       backgroundColor: const Color(0xFFF4F7FB),
-      appBar: AppBarGradiente(
-  titulo: 'Configurações',
-  subtitulo: 'Gerencie suas preferências',
-),
+      appBar: _AppBarGradiente(
+        titulo: 'Configurações',
+        subtitulo: 'Gerencie suas preferências',
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -360,6 +360,67 @@ class _CampoModal extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF00C6D7), width: 2),
+        ),
+      ),
+    );
+  }
+}
+
+class _AppBarGradiente extends StatelessWidget implements PreferredSizeWidget {
+  final String titulo;
+  final String subtitulo;
+
+  const _AppBarGradiente({required this.titulo, required this.subtitulo});
+
+  @override
+  Size get preferredSize => const Size.fromHeight(80);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.chevron_left_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    titulo,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    subtitulo,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.75),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
