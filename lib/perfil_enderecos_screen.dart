@@ -74,7 +74,6 @@ class _PerfilEnderecosScreenState extends State<PerfilEnderecosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       backgroundColor: const Color(0xFFF4F7FB),
       appBar: _AppBarGradiente(
         titulo: 'Configurações',
