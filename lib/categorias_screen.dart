@@ -186,7 +186,7 @@ void _mostrarAlertaConta(BuildContext context) {
   children: [
     Center(
       child: Image.asset(
-        'imagens/logominimal.png',
+        'assets/imagens/logominimal.png',
         height: 90,
       ),
     ),

@@ -64,6 +64,7 @@ flutter:
   uses-material-design: true
   
   assets:
+  - assets/imagens/
   - assets/imagens/google.png
   - assets/imagens/logo.png
   - assets/imagens/logominimal.png
