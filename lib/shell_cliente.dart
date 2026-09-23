@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'categorias_screen.dart';
 import 'home_cliente_screen.dart';
-import 'lista_profissionais_real.dart';
 import 'pedidos_screen.dart';
 import 'perfil_screen.dart';
 
@@ -17,17 +17,14 @@ class _ClienteShellState extends State<ClienteShell> {
   int _indice = 0;
 
   static const _gradient = LinearGradient(
-    colors: [
-      Color(0xFF00C6D7),
-      Color(0xFF0077B6),
-    ],
+    colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   final List<Widget> _telas = const [
     HomeClienteScreen(),
-    ListaProfissionaisRealScreen(),
+    CategoriasScreen(),
     PedidosScreen(),
     PerfilScreen(),
   ];
@@ -42,16 +39,11 @@ class _ClienteShellState extends State<ClienteShell> {
     );
 
     return Scaffold(
-      body: IndexedStack(
-        index: _indice,
-        children: _telas,
-      ),
+      body: IndexedStack(index: _indice, children: _telas),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           gradient: _gradient,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
           child: SizedBox(
@@ -112,20 +104,14 @@ class _NavBtn extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: selected ? Colors.white : Colors.white60,
-            size: 26,
-          ),
+          Icon(icon, color: selected ? Colors.white : Colors.white60, size: 26),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
               color: selected ? Colors.white : Colors.white60,
               fontSize: 11,
-              fontWeight: selected
-                  ? FontWeight.w700
-                  : FontWeight.normal,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
             ),
           ),
         ],
