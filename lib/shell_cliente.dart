@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 
 import 'categorias_screen.dart';
 import 'home_cliente_screen.dart';
-import 'categorias_screen.dart';
-import 'home_cliente_screen.dart';
 import 'pedidos_screen.dart';
 import 'perfil_screen.dart';
 
@@ -41,11 +39,12 @@ class _ClienteShellState extends State<ClienteShell> {
     );
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FB),
       body: IndexedStack(index: _indice, children: _telas),
       bottomNavigationBar: Container(
+        width: double.infinity,
         decoration: const BoxDecoration(
           gradient: _gradient,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
           child: SizedBox(
