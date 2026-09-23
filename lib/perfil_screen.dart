@@ -158,13 +158,21 @@ Widget build(BuildContext context) {
           );
         },
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: SizedBox(
+        width: double.infinity,
         height: 52,
-        decoration: const BoxDecoration(gradient: _gradientPrincipal),
-        child: const Center(
-          child: Text(
-            'Zeloo © 2026',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: _gradientPrincipal,
+          ),
+          child: const Center(
+            child: Text(
+              'Zeloo © 2026',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+              ),
+            ),
           ),
         ),
       ),
