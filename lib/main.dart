@@ -5,6 +5,8 @@ import 'categorias_screen.dart';
 import 'dart:ui';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'shell_cliente.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -28,9 +30,33 @@ void main() async {
 
       supportedLocales: [Locale('pt', 'BR'), Locale('en', 'US')],
 
-      home: HomePage(),
+      home: const AuthGate(),
     ),
   );
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasData) {
+          return const ClienteShell();
+        }
+
+        return const HomePage();
+      },
+    );
+  }
 }
 
 const _gradientPrincipal = LinearGradient(
