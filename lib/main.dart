@@ -6,7 +6,9 @@ import 'dart:ui';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'shell_cliente.dart';
+import 'home_profissional_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -38,22 +40,61 @@ void main() async {
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+  Future<String> _tipoConta(User user) async {
+    final cliente = await FirebaseFirestore.instance
+        .collection('Clientes')
+        .doc(user.uid)
+        .get();
+
+    if (cliente.exists) return 'cliente';
+
+    final profissional = await FirebaseFirestore.instance
+        .collection('Profissionais')
+        .doc(user.uid)
+        .get();
+
+    if (profissional.exists) return 'profissional';
+
+    return 'desconhecido';
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      builder: (context, authSnapshot) {
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        if (snapshot.hasData) {
-          return const ClienteShell();
+        final user = authSnapshot.data;
+
+        if (user == null) {
+          return const HomePage();
         }
 
-        return const HomePage();
+        return FutureBuilder<String>(
+          future: _tipoConta(user),
+          builder: (context, tipoSnapshot) {
+            if (tipoSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (tipoSnapshot.data == 'profissional') {
+              return const HomeProfissionalScreen();
+            }
+
+            if (tipoSnapshot.data == 'cliente') {
+              return const ClienteShell();
+            }
+
+            return const HomePage();
+          },
+        );
       },
     );
   }
