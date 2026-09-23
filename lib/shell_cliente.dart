@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import 'categorias_screen.dart';
 import 'home_cliente_screen.dart';
+import 'categorias_screen.dart';
+import 'home_cliente_screen.dart';
 import 'pedidos_screen.dart';
 import 'perfil_screen.dart';
 
@@ -24,7 +26,7 @@ class _ClienteShellState extends State<ClienteShell> {
 
   final List<Widget> _telas = const [
     HomeClienteScreen(),
-    CategoriasScreen(),
+    CategoriasScreen(showBottomNavigation: false),
     PedidosScreen(),
     PerfilScreen(),
   ];

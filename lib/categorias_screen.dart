@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'Login.dart';
+import 'lista_profissionais_real.dart';
 
 class CategoriasScreen extends StatefulWidget {
-  const CategoriasScreen({super.key});
+  final bool showBottomNavigation;
+
+  const CategoriasScreen({
+    super.key,
+    this.showBottomNavigation = true,
+  });
 
   @override
   State<CategoriasScreen> createState() => _CategoriasScreenState();
@@ -34,6 +41,22 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
   void initState() {
     super.initState();
     categoriasFiltradas = categorias;
+  }
+
+  void _abrirCategoria(BuildContext context, String especialidade) {
+    if (FirebaseAuth.instance.currentUser != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ListaProfissionaisRealScreen(
+            filtroEspecialidade: especialidade,
+          ),
+        ),
+      );
+      return;
+    }
+
+    _mostrarAlertaConta(context);
   }
 
   void _filtrarCategorias(String texto) {
@@ -162,14 +185,16 @@ void _mostrarAlertaConta(BuildContext context) {
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
+            leading: widget.showBottomNavigation
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
@@ -263,7 +288,7 @@ void _mostrarAlertaConta(BuildContext context) {
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _CategoriaCard(
                   categoria: categoriasFiltradas[index],
-                  onTap: () => _mostrarAlertaConta(context),
+                  onTap: () => _abrirCategoria(context, categoriasFiltradas[index].label),
                 ),
                 childCount: categoriasFiltradas.length,
               ),
@@ -274,7 +299,8 @@ void _mostrarAlertaConta(BuildContext context) {
         ],
       ),
 
-      bottomNavigationBar: Container(
+      bottomNavigationBar: widget.showBottomNavigation
+          ? Container(
         decoration: const BoxDecoration(
           gradient: _gradient,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -314,7 +340,8 @@ void _mostrarAlertaConta(BuildContext context) {
             ),
           ),
         ),
-      ),
+      )
+          : null,
     );
   }
 }
