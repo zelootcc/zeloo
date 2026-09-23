@@ -53,7 +53,9 @@ class _LoginState extends State<LoginScreen> {
 
       if (cliente.exists) {
         if (mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);        return;
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+        return;
       }
 
       final profissional = await FirebaseFirestore.instance
@@ -63,7 +65,9 @@ class _LoginState extends State<LoginScreen> {
 
       if (profissional.exists) {
         if (mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);        return;
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+        return;
       }
 
       await FirebaseAuth.instance.signOut();
