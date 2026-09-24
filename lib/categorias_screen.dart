@@ -5,10 +5,12 @@ import 'lista_profissionais_real.dart';
 
 class CategoriasScreen extends StatefulWidget {
   final bool showBottomNavigation;
+  final VoidCallback? onVoltar;
 
   const CategoriasScreen({
     super.key,
     this.showBottomNavigation = true,
+    this.onVoltar,
   });
 
   @override
@@ -185,14 +187,14 @@ void _mostrarAlertaConta(BuildContext context) {
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
-            leading: widget.showBottomNavigation
+            leading: (widget.showBottomNavigation || widget.onVoltar != null)
                 ? IconButton(
                     icon: const Icon(
                       Icons.arrow_back_ios_new_rounded,
                       color: Colors.white,
                       size: 20,
                     ),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: widget.onVoltar ?? () => Navigator.maybePop(context),
                   )
                 : null,
             flexibleSpace: FlexibleSpaceBar(

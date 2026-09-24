@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'botao_voltar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_service.dart';
@@ -13,8 +14,15 @@ const _gradientPrincipal = LinearGradient(
   end: Alignment.bottomRight,
 );
 
-class PerfilScreen extends StatelessWidget {
-  const PerfilScreen({super.key});
+class PerfilScreen extends StatefulWidget {
+  final VoidCallback? onVoltar;
+  const PerfilScreen({super.key, this.onVoltar});
+  @override
+  State<PerfilScreen> createState() => _PerfilScreenState();
+}
+
+class _PerfilScreenState extends State<PerfilScreen> {
+  late final _perfil = FirebaseService.observarUsuario();
 
   String _texto(
     Map<String, dynamic> dados,
@@ -36,39 +44,40 @@ class PerfilScreen extends StatelessWidget {
         .join();
   }
 
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF4F7FB),
-    body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>?>(
-      future: FirebaseService.dadosUsuario(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-          return const Center(
-            child: Text('Não foi possível carregar seu perfil.'),
-          );
-        }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FB),
+      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>?>(
+        stream: _perfil,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+            return const Center(
+              child: Text('Não foi possível carregar seu perfil.'),
+            );
+          }
 
           final dados = snapshot.data!.data() ?? <String, dynamic>{};
           final nome = _texto(dados, 'nome');
-          final email = _texto(
-            dados,
-            'email',
-            FirebaseService.usuario?.email ?? '',
-          );
+          final email =
+              FirebaseService.usuario?.email ??
+              _texto(dados, 'email', FirebaseService.usuario?.email ?? '');
           final telefone = _texto(dados, 'telefone');
 
           return SingleChildScrollView(
             child: Column(
               children: [
-                _HeaderPerfil(
+                ComBotaoVoltar(
+                  onVoltar: widget.onVoltar,
+                  child: _HeaderPerfil(
                   iniciais: _iniciais(nome),
                   nome: nome,
                   email: email,
                   telefone: telefone,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Padding(
@@ -162,16 +171,11 @@ Widget build(BuildContext context) {
         width: double.infinity,
         height: 52,
         child: DecoratedBox(
-          decoration: const BoxDecoration(
-            gradient: _gradientPrincipal,
-          ),
+          decoration: const BoxDecoration(gradient: _gradientPrincipal),
           child: const Center(
             child: Text(
               'Zeloo © 2026',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
           ),
         ),

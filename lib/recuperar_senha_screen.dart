@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'firebase_service.dart';
 
 class RecuperarSenhaScreen extends StatefulWidget {
   const RecuperarSenhaScreen({super.key});
@@ -19,7 +20,8 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
     super.dispose();
   }
 
-  void _handleEnviar() {
+  Future<void> _handleEnviar() async {
+    if (_loading) return;
     setState(() => _erro = '');
 
     if (_emailController.text.trim().isEmpty) {
@@ -35,12 +37,17 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
 
     setState(() => _loading = true);
 
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      setState(() {
-        _loading = false;
-        _enviado = true;
-      });
-    });
+    try {
+      await FirebaseService.recuperarSenha(_emailController.text);
+      if (mounted) setState(() => _enviado = true);
+    } catch (_) {
+      if (mounted)
+        setState(
+          () => _erro = 'Não foi possível enviar o e-mail. Tente novamente.',
+        );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override

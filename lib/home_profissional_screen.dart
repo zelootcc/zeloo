@@ -19,18 +19,14 @@ class HomeProfissionalScreen extends StatefulWidget {
 }
 
 class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
-  Future<Map<String, dynamic>> _dados() async {
-    final documento = await FirebaseService.dadosProfissional();
+  late final _perfil = FirebaseService.observarProfissional();
+  late final _pedidos = FirebaseService.meusPedidosProfissional();
 
-    if (documento == null || !documento.exists) {
-      throw Exception('Perfil profissional não encontrado.');
-    }
-
-    return documento.data()!;
-  }
-
-  String _texto(Map<String, dynamic> dados, String campo,
-      [String padrao = 'Não informado']) {
+  String _texto(
+    Map<String, dynamic> dados,
+    String campo, [
+    String padrao = 'Não informado',
+  ]) {
     final valor = dados[campo];
     if (valor == null || valor.toString().trim().isEmpty) return padrao;
     return valor.toString();
@@ -44,8 +40,8 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _dados(),
+    return StreamBuilder(
+      stream: _perfil,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -54,7 +50,7 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
           );
         }
 
-        if (snapshot.hasError || !snapshot.hasData) {
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
           return Scaffold(
             backgroundColor: const Color(0xFFF4F7FB),
             body: Center(
@@ -69,7 +65,7 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
           );
         }
 
-        final dados = snapshot.data as Map<String, dynamic>;
+        final dados = snapshot.data!.data()!;
         final nome = _texto(dados, 'nome', 'Profissional');
         final area = _texto(dados, 'area', 'Serviço');
         final avaliacao = _numero(dados, 'avaliacao');
@@ -161,11 +157,18 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             cor: const Color(0xFFFFC107),
                           ),
                           const SizedBox(width: 12),
-                          _ResumoCard(
-                            label: 'Pedidos',
-                            valor: 'Ver',
-                            icon: Icons.receipt_long_rounded,
-                            cor: const Color(0xFF0077B6),
+                          StreamBuilder(
+                            stream: _pedidos,
+                            builder: (context, pedidos) => _ResumoCard(
+                              label: 'Pedidos',
+                              valor: pedidos.hasError
+                                  ? 'Erro'
+                                  : pedidos.hasData
+                                  ? '${pedidos.data!.docs.length}'
+                                  : '...',
+                              icon: Icons.receipt_long_rounded,
+                              cor: const Color(0xFF0077B6),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           _ResumoCard(
@@ -202,7 +205,8 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PerfilProfissionalScreen(),
+                                builder: (_) =>
+                                    const PerfilProfissionalScreen(),
                               ),
                             ),
                           ),
@@ -226,7 +230,8 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PedidosProfissionalScreen(),
+                                builder: (_) =>
+                                    const PedidosProfissionalScreen(),
                               ),
                             ),
                           ),
@@ -289,10 +294,7 @@ class _ResumoCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10),
           ],
         ),
         child: Column(

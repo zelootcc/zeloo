@@ -10,18 +10,30 @@ const _gradientPrincipal = LinearGradient(
   end: Alignment.bottomRight,
 );
 
-class HomeClienteScreen extends StatelessWidget {
+class HomeClienteScreen extends StatefulWidget {
   const HomeClienteScreen({super.key});
+  @override
+  State<HomeClienteScreen> createState() => _HomeClienteScreenState();
+}
+
+class _HomeClienteScreenState extends State<HomeClienteScreen> {
+  late final _perfil = FirebaseService.observarUsuario();
   String nome(Map<String, dynamic> d) =>
       d['nome']?.toString().split(' ').first ?? 'Cliente';
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF4F7FB),
-    body: FutureBuilder(
-      future: FirebaseService.dadosUsuario(),
+    body: StreamBuilder(
+      stream: _perfil,
       builder: (context, s) {
-        if (s.connectionState == ConnectionState.waiting)
+        if (s.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+        if (s.hasError || !s.hasData || !s.data!.exists) {
+          return const Center(
+            child: Text('Não foi possível carregar seu perfil.'),
+          );
+        }
         final d = s.data?.data() ?? {};
         return SingleChildScrollView(
           child: Column(

@@ -10,6 +10,12 @@ service cloud.firestore {
       return autenticado() && request.auth.uid == uid;
     }
 
+    match /ConfiguracoesUsuarios/{uid} {
+      allow read, delete: if donoDoPerfil(uid);
+      allow create, update: if donoDoPerfil(uid) &&
+        request.resource.data.keys().hasOnly(['enderecos', 'cartoes', 'notificacoes']);
+    }
+
     match /Clientes/{uid} {
       allow read, create, update, delete: if donoDoPerfil(uid);
     }

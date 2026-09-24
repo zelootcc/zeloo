@@ -1,11 +1,79 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'configuracoes_usuario.dart';
 
 class FirebaseService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
   static User? get usuario => _auth.currentUser;
+
+  static Stream<DocumentSnapshot<Map<String, dynamic>>>
+  observarUsuario() async* {
+    final id = uid;
+    final colecao = await colecaoUsuario();
+    if (colecao == null) throw Exception('Perfil não encontrado.');
+    yield* _db.collection(colecao).doc(id).snapshots();
+  }
+
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> observarProfissional() {
+    return _db.collection('Profissionais').doc(uid).snapshots();
+  }
+
+  // Informações privadas nunca ficam no perfil público do profissional.
+  static DocumentReference<Map<String, dynamic>> get _configuracoes =>
+      _db.collection('ConfiguracoesUsuarios').doc(uid);
+
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> configuracoes() =>
+      _configuracoes.snapshots();
+
+  static Future<void> salvarNotificacao(String campo, bool valor) {
+    if (!{'email', 'sms', 'atualizacoes', 'seguranca'}.contains(campo)) {
+      throw ArgumentError('Preferência inválida.');
+    }
+    return _configuracoes.set({
+      'notificacoes': {campo: valor},
+    }, SetOptions(merge: true));
+  }
+
+  static Future<void> alterarItemPrivado(
+    String campo, {
+    Map<String, dynamic>? adicionar,
+    String? remover,
+    String? principal,
+  }) async {
+    if (!{'enderecos', 'cartoes'}.contains(campo)) {
+      throw ArgumentError('Lista inválida.');
+    }
+    final ref = _configuracoes;
+    final novoId = _db.collection('ConfiguracoesUsuarios').doc().id;
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(ref);
+      final itens = atualizarListaPrivada(
+        (snapshot.data()?[campo] as List?) ?? [],
+        campo: campo,
+        novoId: novoId,
+        adicionar: adicionar,
+        remover: remover,
+        principal: principal,
+      );
+      transaction.set(ref, {campo: itens}, SetOptions(merge: true));
+    });
+  }
+
+  static Future<void> alterarSenha(String atual, String nova) async {
+    final user = usuario;
+    if (user == null || user.email == null) {
+      throw Exception('Entre novamente para alterar a senha.');
+    }
+    await user.reauthenticateWithCredential(
+      EmailAuthProvider.credential(email: user.email!, password: atual),
+    );
+    await user.updatePassword(nova);
+  }
+
+  static Future<void> recuperarSenha(String email) =>
+      _auth.sendPasswordResetEmail(email: email.trim());
 
   static String get uid {
     final id = usuario?.uid;
@@ -37,7 +105,8 @@ class FirebaseService {
     return _db.collection(colecao).doc(id).get();
   }
 
-  static Future<DocumentSnapshot<Map<String, dynamic>>?> dadosProfissional() async {
+  static Future<DocumentSnapshot<Map<String, dynamic>>?>
+  dadosProfissional() async {
     final id = usuario?.uid;
     if (id == null) return null;
 
@@ -51,7 +120,10 @@ class FirebaseService {
       throw Exception('Perfil do usuário não encontrado.');
     }
 
-    await _db.collection(colecao).doc(uid).update(dados);
+    await _db.collection(colecao).doc(uid).update({
+      ...dados,
+      'atualizadoEm': FieldValue.serverTimestamp(),
+    });
   }
 
   static Future<void> atualizarDisponibilidade(bool disponivel) async {
@@ -69,9 +141,7 @@ class FirebaseService {
   }
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> meusServicos() {
-    return _servicos
-        .where('profissionalId', isEqualTo: uid)
-        .snapshots();
+    return _servicos.where('profissionalId', isEqualTo: uid).snapshots();
   }
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> meusServicosDoProfissional(
@@ -184,10 +254,7 @@ class FirebaseService {
         .snapshots();
   }
 
-  static Future<void> atualizarStatusPedido(
-    String id,
-    String status,
-  ) async {
+  static Future<void> atualizarStatusPedido(String id, String status) async {
     const statusValidos = {
       'aguardando',
       'confirmado',

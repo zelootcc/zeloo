@@ -14,6 +14,7 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
   final _telefoneCtrl = TextEditingController();
   bool _carregando = true;
   bool _loading = false;
+  bool _erroCarregamento = false;
 
   @override
   void initState() {
@@ -22,13 +23,21 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
   }
 
   Future<void> _carregar() async {
-    final doc = await FirebaseService.dadosUsuario();
-    if (doc != null && mounted) {
+    setState(() {
+      _carregando = true;
+      _erroCarregamento = false;
+    });
+    try {
+      final doc = await FirebaseService.dadosUsuario();
+      if (!mounted) return;
+      if (doc == null || !doc.exists) throw Exception('Perfil não encontrado.');
       final d = doc.data() ?? {};
       _nomeCtrl.text = d['nome']?.toString() ?? '';
       _emailCtrl.text =
-          d['email']?.toString() ?? FirebaseService.usuario?.email ?? '';
+          FirebaseService.usuario?.email ?? d['email']?.toString() ?? '';
       _telefoneCtrl.text = d['telefone']?.toString() ?? '';
+    } catch (_) {
+      if (mounted) setState(() => _erroCarregamento = true);
     }
     if (mounted) setState(() => _carregando = false);
   }
@@ -42,6 +51,7 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
   }
 
   Future<void> _salvar() async {
+    if (_loading) return;
     if (_nomeCtrl.text.trim().isEmpty) {
       _mostrarErro('Informe seu nome.');
       return;
@@ -53,16 +63,24 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
     }
     setState(() => _loading = true);
     try {
+      final email = _emailCtrl.text.trim();
+      final usuario = FirebaseService.usuario;
+      final emailAlterado = usuario != null && email != usuario.email;
+      if (emailAlterado) await usuario.verifyBeforeUpdateEmail(email);
       await FirebaseService.atualizarUsuario({
         'nome': _nomeCtrl.text.trim(),
-        'email': _emailCtrl.text.trim(),
+        'email': usuario?.email ?? email,
         'telefone': _telefoneCtrl.text.trim(),
       });
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Perfil atualizado!'),
+          content: Text(
+            emailAlterado
+                ? 'Perfil atualizado! Confirme o novo e-mail pelo link enviado antes de usá-lo para entrar.'
+                : 'Perfil atualizado!',
+          ),
           backgroundColor: const Color(0xFF4CAF50),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -91,6 +109,17 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_erroCarregamento) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Editar perfil')),
+        body: Center(
+          child: TextButton(
+            onPressed: _carregar,
+            child: const Text('Não foi possível carregar. Tentar novamente'),
+          ),
+        ),
+      );
+    }
     if (_carregando) {
       return const Scaffold(
         backgroundColor: Color(0xFFF4F7FB),
@@ -128,10 +157,7 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: const Color(0xFF00C6D7),
-                    width: 2,
-                  ),
+                  border: Border.all(color: const Color(0xFF00C6D7), width: 2),
                 ),
                 child: Center(
                   child: Text(

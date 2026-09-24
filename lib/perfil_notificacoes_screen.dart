@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_service.dart';
 
 class PerfilNotificacoesScreen extends StatefulWidget {
   final bool abaSeguranca;
@@ -14,10 +16,21 @@ class _PerfilNotificacoesScreenState extends State<PerfilNotificacoesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  bool _email = true;
-  bool _sms = true;
-  bool _atualizacoes = true;
-  bool _segurancaNotif = true;
+  late final Stream<DocumentSnapshot<Map<String, dynamic>>> _preferencias =
+      FirebaseService.configuracoes();
+  bool _salvandoPreferencia = false;
+
+  Future<void> _salvarPreferencia(String campo, bool valor) async {
+    if (_salvandoPreferencia) return;
+    setState(() => _salvandoPreferencia = true);
+    try {
+      await FirebaseService.salvarNotificacao(campo, valor);
+    } catch (_) {
+      if (mounted) _snack('Não foi possível salvar a preferência.', erro: true);
+    } finally {
+      if (mounted) setState(() => _salvandoPreferencia = false);
+    }
+  }
 
   final _senhaAtualCtrl = TextEditingController();
   final _novaSenhaCtrl = TextEditingController();
@@ -46,7 +59,8 @@ class _PerfilNotificacoesScreenState extends State<PerfilNotificacoesScreen>
     super.dispose();
   }
 
-  void _salvarSenha() {
+  Future<void> _salvarSenha() async {
+    if (_loading) return;
     if (_senhaAtualCtrl.text.isEmpty ||
         _novaSenhaCtrl.text.isEmpty ||
         _confirmarCtrl.text.isEmpty) {
@@ -62,13 +76,25 @@ class _PerfilNotificacoesScreenState extends State<PerfilNotificacoesScreen>
       return;
     }
     setState(() => _loading = true);
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      setState(() => _loading = false);
+    try {
+      await FirebaseService.alterarSenha(
+        _senhaAtualCtrl.text,
+        _novaSenhaCtrl.text,
+      );
+      if (!mounted) return;
       _senhaAtualCtrl.clear();
       _novaSenhaCtrl.clear();
       _confirmarCtrl.clear();
       _snack('Senha alterada com sucesso!');
-    });
+    } catch (_) {
+      if (mounted)
+        _snack(
+          'Não foi possível alterar a senha. Verifique a senha atual e tente novamente.',
+          erro: true,
+        );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _snack(String msg, {bool erro = false}) {
@@ -101,35 +127,51 @@ class _PerfilNotificacoesScreenState extends State<PerfilNotificacoesScreen>
   }
 
   Widget _AbaNotificacoes() {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const SizedBox(height: 8),
-        _ItemToggle(
-          titulo: 'Email',
-          subtitulo: 'Atualizações por email',
-          valor: _email,
-          onChanged: (v) => setState(() => _email = v),
-        ),
-        _ItemToggle(
-          titulo: 'SMS',
-          subtitulo: 'Mensagens via SMS',
-          valor: _sms,
-          onChanged: (v) => setState(() => _sms = v),
-        ),
-        _ItemToggle(
-          titulo: 'Atualizações',
-          subtitulo: 'Novidades e recursos',
-          valor: _atualizacoes,
-          onChanged: (v) => setState(() => _atualizacoes = v),
-        ),
-        _ItemToggle(
-          titulo: 'Segurança',
-          subtitulo: 'Alertas importantes',
-          valor: _segurancaNotif,
-          onChanged: (v) => setState(() => _segurancaNotif = v),
-        ),
-      ],
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: _preferencias,
+      builder: (context, snapshot) {
+        if (snapshot.hasError)
+          return const Center(
+            child: Text('Não foi possível carregar as preferências.'),
+          );
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+        final preferencias =
+            snapshot.data!.data()?['notificacoes'] as Map? ?? {};
+        return AbsorbPointer(
+          absorbing: _salvandoPreferencia,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const SizedBox(height: 8),
+              _ItemToggle(
+                titulo: 'Email',
+                subtitulo: 'Atualizações por email',
+                valor: preferencias['email'] as bool? ?? true,
+                onChanged: (v) => _salvarPreferencia('email', v),
+              ),
+              _ItemToggle(
+                titulo: 'SMS',
+                subtitulo: 'Mensagens via SMS',
+                valor: preferencias['sms'] as bool? ?? true,
+                onChanged: (v) => _salvarPreferencia('sms', v),
+              ),
+              _ItemToggle(
+                titulo: 'Atualizações',
+                subtitulo: 'Novidades e recursos',
+                valor: preferencias['atualizacoes'] as bool? ?? true,
+                onChanged: (v) => _salvarPreferencia('atualizacoes', v),
+              ),
+              _ItemToggle(
+                titulo: 'Segurança',
+                subtitulo: 'Alertas importantes',
+                valor: preferencias['seguranca'] as bool? ?? true,
+                onChanged: (v) => _salvarPreferencia('seguranca', v),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -44,6 +44,7 @@ class _CadastroPerfilProfissionalScreenState
       }
 
       final dados = documento.data()!;
+      if (!mounted) return;
 
       _nomeCtrl.text = dados['nome']?.toString() ?? '';
       _areaCtrl.text = dados['area']?.toString() ?? '';
@@ -54,9 +55,9 @@ class _CadastroPerfilProfissionalScreenState
       _precoCtrl.text = dados['precoHora']?.toString() ?? '';
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar perfil: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao carregar perfil: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -84,7 +85,9 @@ class _CadastroPerfilProfissionalScreenState
       await FirebaseService.atualizarUsuario({
         'nome': _nomeCtrl.text.trim(),
         'area': _areaCtrl.text.trim(),
+        'especialidade': _areaCtrl.text.trim(),
         'regiao': _regiaoCtrl.text.trim(),
+        'cidade': _regiaoCtrl.text.trim(),
         'disponibilidade': _disponibilidadeCtrl.text.trim(),
         'pagamento': _pagamentoCtrl.text.trim(),
         'descricao': _descricaoCtrl.text.trim(),
@@ -106,8 +109,9 @@ class _CadastroPerfilProfissionalScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensagem),
-        backgroundColor:
-            erro ? const Color(0xFFE53E3E) : const Color(0xFF4CAF50),
+        backgroundColor: erro
+            ? const Color(0xFFE53E3E)
+            : const Color(0xFF4CAF50),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -183,22 +187,40 @@ class _CadastroPerfilProfissionalScreenState
                 children: [
                   const _Secao('Informações Básicas'),
                   const SizedBox(height: 14),
-                  _campo('Nome de preferência *', _nomeCtrl,
-                      Icons.person_outline_rounded),
-                  _campo('Área de atuação *', _areaCtrl,
-                      Icons.work_outline_rounded),
-                  _campo('Região de atendimento', _regiaoCtrl,
-                      Icons.location_on_outlined),
+                  _campo(
+                    'Nome de preferência *',
+                    _nomeCtrl,
+                    Icons.person_outline_rounded,
+                  ),
+                  _campo(
+                    'Área de atuação *',
+                    _areaCtrl,
+                    Icons.work_outline_rounded,
+                  ),
+                  _campo(
+                    'Região de atendimento',
+                    _regiaoCtrl,
+                    Icons.location_on_outlined,
+                  ),
                   const SizedBox(height: 12),
                   const _Secao('Sobre o Trabalho'),
                   const SizedBox(height: 14),
-                  _campo('Disponibilidade', _disponibilidadeCtrl,
-                      Icons.schedule_outlined),
-                  _campo('Opções de pagamento', _pagamentoCtrl,
-                      Icons.payments_outlined),
-                  _campo('Valor por hora (R\$)', _precoCtrl,
-                      Icons.attach_money_rounded,
-                      tipo: TextInputType.number),
+                  _campo(
+                    'Disponibilidade',
+                    _disponibilidadeCtrl,
+                    Icons.schedule_outlined,
+                  ),
+                  _campo(
+                    'Opções de pagamento',
+                    _pagamentoCtrl,
+                    Icons.payments_outlined,
+                  ),
+                  _campo(
+                    'Valor por hora (R\$)',
+                    _precoCtrl,
+                    Icons.attach_money_rounded,
+                    tipo: TextInputType.number,
+                  ),
                   _campoMultilinha('Descrição / Bio', _descricaoCtrl),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -244,10 +266,7 @@ class _CadastroPerfilProfissionalScreenState
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -268,19 +287,13 @@ class _CadastroPerfilProfissionalScreenState
     );
   }
 
-  Widget _campoMultilinha(
-    String label,
-    TextEditingController controller,
-  ) {
+  Widget _campoMultilinha(String label, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         TextField(

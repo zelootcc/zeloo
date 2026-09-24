@@ -22,11 +22,13 @@ class _ClienteShellState extends State<ClienteShell> {
     end: Alignment.bottomRight,
   );
 
-  final List<Widget> _telas = const [
-    HomeClienteScreen(),
-    CategoriasScreen(showBottomNavigation: false),
-    PedidosScreen(),
-    PerfilScreen(),
+  void _voltarAoInicio() => setState(() => _indice = 0);
+
+  late final List<Widget> _telas = [
+    const HomeClienteScreen(),
+    CategoriasScreen(showBottomNavigation: false, onVoltar: _voltarAoInicio),
+    PedidosScreen(onVoltar: _voltarAoInicio),
+    PerfilScreen(onVoltar: _voltarAoInicio),
   ];
 
   @override

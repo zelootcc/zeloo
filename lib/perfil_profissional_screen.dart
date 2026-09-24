@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'botao_voltar.dart';
 
 import 'cadastro_perfil_profissional_screen.dart';
 import 'firebase_service.dart';
@@ -21,6 +22,7 @@ class PerfilProfissionalScreen extends StatefulWidget {
 }
 
 class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
+  late final _perfil = FirebaseService.observarProfissional();
   bool _disponivel = false;
 
   Future<void> _alternarDisponibilidade() async {
@@ -40,8 +42,11 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
     }
   }
 
-  String _texto(Map<String, dynamic> dados, String campo,
-      [String padrao = 'Não informado']) {
+  String _texto(
+    Map<String, dynamic> dados,
+    String campo, [
+    String padrao = 'Não informado',
+  ]) {
     final valor = dados[campo];
     if (valor == null || valor.toString().trim().isEmpty) return padrao;
     return valor.toString();
@@ -57,14 +62,16 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
-      body: FutureBuilder(
-        future: FirebaseService.dadosProfissional(),
+      body: StreamBuilder(
+        stream: _perfil,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          if (snapshot.hasError ||
+              !snapshot.hasData ||
+              !snapshot.data!.exists) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -79,10 +86,12 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
           final dados = snapshot.data!.data()!;
           final nome = _texto(dados, 'nome', 'Profissional');
           final especialidade = _texto(dados, 'area', 'Serviço');
-          final email = _texto(dados, 'email');
+          final email =
+              FirebaseService.usuario?.email ?? _texto(dados, 'email');
           final avaliacao = _numero(dados, 'avaliacao');
-          final totalAvaliacoes =
-              (dados['totalAvaliacoes'] is num) ? dados['totalAvaliacoes'] as num : 0;
+          final totalAvaliacoes = (dados['totalAvaliacoes'] is num)
+              ? dados['totalAvaliacoes'] as num
+              : 0;
           final preco = _numero(dados, 'precoHora');
           _disponivel = dados['disponivel'] is bool
               ? dados['disponivel'] as bool
@@ -99,13 +108,15 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
           return SingleChildScrollView(
             child: Column(
               children: [
-                _HeaderPerfil(
+                ComBotaoVoltar(
+                  child: _HeaderPerfil(
                   nome: nome,
                   especialidade: especialidade,
                   email: email,
                   iniciais: iniciais,
                   disponivel: _disponivel,
                   onToggle: _alternarDisponibilidade,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Padding(
@@ -232,9 +243,9 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
                           onPressed: () async {
                             await FirebaseService.sair();
                             if (!context.mounted) return;
-                            Navigator.of(context).popUntil(
-                              (route) => route.isFirst,
-                            );
+                            Navigator.of(
+                              context,
+                            ).popUntil((route) => route.isFirst);
                           },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFFE53E3E),
@@ -368,10 +379,7 @@ class _HeaderPerfil extends StatelessWidget {
             onTap: onToggle,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                vertical: 10,
-                horizontal: 16,
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.18),
                 borderRadius: BorderRadius.circular(14),
@@ -436,10 +444,7 @@ class _StatCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10),
           ],
         ),
         child: Column(
