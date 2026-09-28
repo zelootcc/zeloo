@@ -262,6 +262,43 @@ class _CardPedidoState extends State<_CardPedido> {
     }
   }
 
+  Future<void> _confirmarCancelamento() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Cancelar pedido?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Se você não puder executar o serviço, o pedido será marcado como cancelado para você e para o cliente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Voltar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53E3E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Cancelar pedido'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      await _atualizarStatus('cancelado');
+    }
+  }
+
   void _mostrarAcoes(BuildContext context) {
     final status = _texto(widget.dados['status'], 'aguardando');
 
@@ -356,6 +393,7 @@ class _CardPedidoState extends State<_CardPedido> {
     final config = _statusConfig[status] ?? _statusConfig['aguardando']!;
     final cor = Color(config['color'] as int);
     final label = config['label'] as String;
+    final podeCancelar = status == 'aguardando' || status == 'confirmado';
 
     final valor = widget.dados['valor'] is num
         ? (widget.dados['valor'] as num).toDouble()
@@ -497,6 +535,40 @@ class _CardPedidoState extends State<_CardPedido> {
                   ],
                 ),
               ),
+              if (podeCancelar) ...[
+                Divider(height: 1, color: Colors.grey[100]),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _processando ? null : _confirmarCancelamento,
+                      icon: _processando
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.close_rounded, size: 19),
+                      label: Text(
+                        _processando ? 'Cancelando...' : 'Cancelar pedido',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFE53E3E),
+                        side: const BorderSide(
+                          color: Color(0xFFE53E3E),
+                          width: 1.4,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
