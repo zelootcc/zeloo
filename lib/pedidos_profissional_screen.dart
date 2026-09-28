@@ -245,12 +245,12 @@ class _CardPedidoState extends State<_CardPedido> {
     return valor.toString();
   }
 
-  Future<void> _atualizarStatus(String status) async {
+  Future<void> _atualizarStatus(String status, {bool fecharModal = false}) async {
     setState(() => _processando = true);
 
     try {
       await FirebaseService.atualizarStatusPedido(widget.id, status);
-      if (mounted) Navigator.pop(context);
+      if (mounted && fecharModal) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -348,7 +348,7 @@ class _CardPedidoState extends State<_CardPedido> {
                   child: OutlinedButton(
                     onPressed: _processando
                         ? null
-                        : () => _atualizarStatus('cancelado'),
+                        : () => _atualizarStatus('cancelado', fecharModal: true),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFE53E3E),
                       side: const BorderSide(
@@ -367,7 +367,7 @@ class _CardPedidoState extends State<_CardPedido> {
                   child: ElevatedButton(
                     onPressed: _processando
                         ? null
-                        : () => _atualizarStatus('confirmado'),
+                        : () => _atualizarStatus('confirmado', fecharModal: true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0077B6),
                       foregroundColor: Colors.white,
