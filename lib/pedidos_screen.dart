@@ -14,11 +14,216 @@ class _PedidosScreenState extends State<PedidosScreen>{
     return CustomScrollView(slivers:[
       SliverAppBar(expandedHeight:140,pinned:true,backgroundColor:Colors.transparent,elevation:0,automaticallyImplyLeading:false,leading:Align(alignment:Alignment.topLeft,child:BotaoVoltar(onVoltar:widget.onVoltar)),flexibleSpace:FlexibleSpaceBar(background:Container(decoration:const BoxDecoration(gradient:_gradient,borderRadius:BorderRadius.only(bottomLeft:Radius.circular(32),bottomRight:Radius.circular(32))),padding:const EdgeInsets.fromLTRB(24,56,24,20),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Meus Pedidos',style:TextStyle(color:Colors.white,fontSize:26,fontWeight:FontWeight.w900)),const SizedBox(height:4),Text('Acompanhe seus serviços',style:TextStyle(color:Colors.white70,fontSize:14))])))),
       SliverToBoxAdapter(child:SizedBox(height:54,child:ListView.separated(scrollDirection:Axis.horizontal,padding:const EdgeInsets.symmetric(horizontal:20,vertical:10),itemCount:_filtros.length,separatorBuilder:(_,__)=>const SizedBox(width:8),itemBuilder:(_,i){final f=_filtros[i];final sel=f==_filtro;return GestureDetector(onTap:()=>setState(()=>_filtro=f),child:Container(padding:const EdgeInsets.symmetric(horizontal:14,vertical:6),decoration:BoxDecoration(gradient:sel?_gradient:null,color:sel?null:Colors.white,borderRadius:BorderRadius.circular(20)),child:Text(f,style:TextStyle(fontSize:12,fontWeight:FontWeight.w700,color:sel?Colors.white:Colors.grey[600]))));}))),
-      pedidos.isEmpty?const SliverFillRemaining(child:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(Icons.receipt_long_rounded,size:64,color:Color(0xFFCCCCCC)),SizedBox(height:16),Text('Nenhum pedido encontrado.',style:TextStyle(color:Colors.grey,fontSize:15))]))):SliverPadding(padding:const EdgeInsets.fromLTRB(20,8,20,32),sliver:SliverList(delegate:SliverChildBuilderDelegate((context,i)=>_CardPedido(dados:pedidos[i].data()),childCount:pedidos.length))),
+      pedidos.isEmpty?const SliverFillRemaining(child:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(Icons.receipt_long_rounded,size:64,color:Color(0xFFCCCCCC)),SizedBox(height:16),Text('Nenhum pedido encontrado.',style:TextStyle(color:Colors.grey,fontSize:15))]))):SliverPadding(padding:const EdgeInsets.fromLTRB(20,8,20,32),sliver:SliverList(delegate:SliverChildBuilderDelegate((context,i)=>_CardPedido(id:pedidos[i].id,dados:pedidos[i].data()),childCount:pedidos.length))),
     ]);
   }));
 }
-class _CardPedido extends StatelessWidget{final Map<String,dynamic> dados;const _CardPedido({required this.dados});
-  String t(dynamic v,[String d='Não informado'])=>v==null||v.toString().trim().isEmpty?d:v.toString();
-  @override Widget build(BuildContext context){final status=t(dados['status'],'aguardando');const cfg={'aguardando':['Aguardando',0xFFFF9800],'confirmado':['Confirmado',0xFF0077B6],'concluido':['Concluído',0xFF4CAF50],'cancelado':['Cancelado',0xFFE53E3E]};final c=cfg[status]??cfg['aguardando']!;final cor=Color(c[1] as int);return Container(margin:const EdgeInsets.only(bottom:12),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18),boxShadow:[BoxShadow(color:Colors.black.withOpacity(.06),blurRadius:12,offset:const Offset(0,3))]),child:Column(children:[Padding(padding:const EdgeInsets.all(16),child:Row(children:[Container(width:48,height:48,decoration:BoxDecoration(color:cor.withOpacity(.12),borderRadius:BorderRadius.circular(14)),child:Icon(Icons.receipt_long_rounded,color:cor)),const SizedBox(width:14),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(t(dados['profissionalNome']),style:const TextStyle(fontWeight:FontWeight.w800,fontSize:14)),const SizedBox(height:3),Text(t(dados['servico']),style:TextStyle(fontSize:12,color:Colors.grey[500]))])),Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:5),decoration:BoxDecoration(color:cor.withOpacity(.12),borderRadius:BorderRadius.circular(10)),child:Text(c[0] as String,style:TextStyle(fontSize:11,fontWeight:FontWeight.w700,color:cor)))])),Divider(height:1,color:Colors.grey[100]),Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:12),child:Row(children:[Icon(Icons.calendar_today_rounded,size:14,color:Colors.grey[400]),const SizedBox(width:5),Text('${t(dados['data'])} às ${t(dados['horario'])}',style:TextStyle(fontSize:12,color:Colors.grey[500])),const Spacer(),Text('R\$ ${t(dados['valor'],'0,00')}',style:const TextStyle(fontSize:14,fontWeight:FontWeight.w800,color:Color(0xFF0077B6)))]))]));}
+class _CardPedido extends StatefulWidget {
+  final String id;
+  final Map<String, dynamic> dados;
+  const _CardPedido({required this.id, required this.dados});
+
+  @override
+  State<_CardPedido> createState() => _CardPedidoState();
+}
+
+class _CardPedidoState extends State<_CardPedido> {
+  bool _cancelando = false;
+
+  String t(dynamic v, [String d = 'Não informado']) =>
+      v == null || v.toString().trim().isEmpty ? d : v.toString();
+
+  Future<void> _cancelarPedido() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Cancelar pedido?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Se você não puder realizar o serviço, o pedido será marcado como cancelado para você e para o profissional.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Voltar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53E3E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Cancelar pedido'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    setState(() => _cancelando = true);
+    try {
+      await FirebaseService.atualizarStatusPedido(widget.id, 'cancelado');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pedido cancelado com sucesso.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível cancelar o pedido: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _cancelando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dados = widget.dados;
+    final status = t(dados['status'], 'aguardando');
+    final podeCancelar = status == 'aguardando' || status == 'confirmado';
+    const cfg = {
+      'aguardando': ['Aguardando', 0xFFFF9800],
+      'confirmado': ['Confirmado', 0xFF0077B6],
+      'concluido': ['Concluído', 0xFF4CAF50],
+      'cancelado': ['Cancelado', 0xFFE53E3E],
+    };
+    final c = cfg[status] ?? cfg['aguardando']!;
+    final cor = Color(c[1] as int);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: cor.withOpacity(.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(Icons.receipt_long_rounded, color: cor),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t(dados['profissionalNome']),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        t(dados['servico']),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: cor.withOpacity(.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    c[0] as String,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: cor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: Colors.grey[100]),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_rounded,
+                    size: 14, color: Colors.grey[400]),
+                const SizedBox(width: 5),
+                Text(
+                  '${t(dados['data'])} às ${t(dados['horario'])}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                ),
+                const Spacer(),
+                Text(
+                  'R\$ ${t(dados['valor'], '0,00')}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0077B6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (podeCancelar) ...[
+            Divider(height: 1, color: Colors.grey[100]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _cancelando ? null : _cancelarPedido,
+                  icon: _cancelando
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.close_rounded, size: 19),
+                  label: Text(
+                    _cancelando ? 'Cancelando...' : 'Cancelar pedido',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE53E3E),
+                    side: const BorderSide(color: Color(0xFFE53E3E), width: 1.4),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
