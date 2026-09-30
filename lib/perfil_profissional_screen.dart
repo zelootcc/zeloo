@@ -3,6 +3,7 @@ import 'botao_voltar.dart';
 
 import 'cadastro_perfil_profissional_screen.dart';
 import 'firebase_service.dart';
+import 'dados_profissionais.dart';
 import 'meus_servicos_screen.dart';
 import 'pedidos_profissional_screen.dart';
 import 'perfil_notificacoes_screen.dart';
@@ -85,7 +86,7 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
 
           final dados = snapshot.data!.data()!;
           final nome = _texto(dados, 'nome', 'Profissional');
-          final especialidade = _texto(dados, 'area', 'Serviço');
+          final especialidade = lerAreas(dados).isEmpty ? 'Serviço' : lerAreas(dados).join(' • ');
           final email =
               FirebaseService.usuario?.email ?? _texto(dados, 'email');
           final avaliacao = _numero(dados, 'avaliacao');

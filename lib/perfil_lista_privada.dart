@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'firebase_service.dart';
+import 'zeloo_ui.dart';
 
 /// Lista privada do usuário, com gravações confirmadas antes de fechar o editor.
 class PerfilListaPrivada extends StatefulWidget {
@@ -44,6 +45,9 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => _EditorItem(cartoes: widget.cartoes),
     );
   }
@@ -55,6 +59,9 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
       title: Text(widget.cartoes ? 'Formas de pagamento' : 'Meus endereços'),
       foregroundColor: Colors.white,
       backgroundColor: const Color(0xFF0077B6),
+      elevation: 0,
+      flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: zelooGradiente)),
+      titleTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
     ),
     body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: _stream,
@@ -73,6 +80,13 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            CabecalhoCampo(
+              icon: widget.cartoes ? Icons.account_balance_wallet_outlined : Icons.location_on_outlined,
+              titulo: widget.cartoes ? 'Tudo organizado' : 'Seus lugares favoritos',
+              descricao: widget.cartoes ? 'Seus cartões, sempre à mão.' : 'Deixe seus endereços prontos para o próximo serviço.',
+              indicador: '${itens.length}',
+            ),
+            const SizedBox(height: 20),
             if (widget.cartoes)
               const Padding(
                 padding: EdgeInsets.only(bottom: 16),
@@ -84,22 +98,35 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
               ),
             if (_salvando) const LinearProgressIndicator(),
             if (itens.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 32),
-                child: Text(
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+                decoration: painelZeloo(),
+                child: Column(children: [
+                  Container(width: 72, height: 72,
+                    decoration: BoxDecoration(color: zelooSuave, borderRadius: BorderRadius.circular(24)),
+                    child: Icon(widget.cartoes ? Icons.credit_card_rounded : Icons.add_location_alt_outlined, color: zelooAzul, size: 34)),
+                  const SizedBox(height: 18),
+                  Text(
                   widget.cartoes
                       ? 'Nenhum cartão cadastrado.'
                       : 'Nenhum endereço cadastrado.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: zelooTexto, fontWeight: FontWeight.w800, fontSize: 16),
                 ),
+                  const SizedBox(height: 8),
+                  const Text('Adicione o primeiro logo abaixo.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64788B), fontSize: 13)),
+                ]),
               ),
             for (final item in itens)
-              Card(
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: painelZeloo(destaque: item['principal'] == true),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ListTile(
+                      Material(color: Colors.transparent, child: ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
                           widget.cartoes
@@ -125,11 +152,14 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
                             color: Colors.red,
                           ),
                         ),
-                      ),
+                      )),
                       if (item['principal'] == true)
-                        const Chip(label: Text('Principal'))
+                        const Chip(label: Text('Principal', style: TextStyle(color: zelooAzul, fontWeight: FontWeight.w700, fontSize: 11)),
+                          avatar: Icon(Icons.verified_rounded, size: 16, color: zelooTurquesa),
+                          backgroundColor: zelooSuave, side: BorderSide.none)
                       else
                         TextButton(
+                          style: TextButton.styleFrom(foregroundColor: zelooAzul),
                           onPressed: _salvando
                               ? null
                               : () => _alterar(principal: item['id'] as String),
@@ -140,12 +170,10 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
                 ),
               ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
+            BotaoZeloo(
               onPressed: _salvando ? null : _adicionar,
-              icon: const Icon(Icons.add),
-              label: Text(
-                widget.cartoes ? 'Adicionar cartão' : 'Adicionar local',
-              ),
+              icon: Icons.add_rounded,
+              texto: widget.cartoes ? 'Adicionar cartão' : 'Adicionar local',
             ),
           ],
         );
@@ -219,21 +247,22 @@ class _EditorItemState extends State<_EditorItem> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              widget.cartoes ? 'Adicionar cartão' : 'Novo endereço',
-              style: Theme.of(context).textTheme.titleLarge,
+            CabecalhoCampo(
+              icon: widget.cartoes ? Icons.credit_card_rounded : Icons.add_location_alt_outlined,
+              titulo: widget.cartoes ? 'Adicionar cartão' : 'Novo endereço',
+              descricao: widget.cartoes ? 'Uma identificação para facilitar sua organização.' : 'Dê um nome a esse lugar e informe o endereço.',
             ),
+            const SizedBox(height: 24),
             TextFormField(
               controller: _titulo,
               enabled: !_salvando,
               maxLength: 80,
-              decoration: InputDecoration(
-                labelText: widget.cartoes ? 'Bandeira' : 'Apelido',
-              ),
+              decoration: campoZeloo(widget.cartoes ? 'Bandeira' : 'Apelido', icon: widget.cartoes ? Icons.credit_card : Icons.home_outlined),
               validator: (value) => value == null || value.trim().isEmpty
                   ? 'Preencha este campo.'
                   : null,
             ),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _detalhe,
               enabled: !_salvando,
@@ -244,11 +273,9 @@ class _EditorItemState extends State<_EditorItem> {
               inputFormatters: widget.cartoes
                   ? [FilteringTextInputFormatter.digitsOnly]
                   : null,
-              decoration: InputDecoration(
-                labelText: widget.cartoes
+              decoration: campoZeloo(widget.cartoes
                     ? 'Últimos 4 dígitos'
-                    : 'Endereço completo',
-              ),
+                    : 'Endereço completo', icon: widget.cartoes ? Icons.pin_outlined : Icons.location_on_outlined),
               validator: (value) {
                 if (value == null || value.trim().isEmpty)
                   return 'Preencha este campo.';
@@ -260,9 +287,9 @@ class _EditorItemState extends State<_EditorItem> {
             if (_erro != null)
               Text(_erro!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 16),
-            FilledButton(
+            BotaoZeloo(
               onPressed: _salvando ? null : _salvar,
-              child: Text(_salvando ? 'Salvando...' : 'Salvar'),
+              texto: _salvando ? 'Salvando...' : 'Salvar',
             ),
           ],
         ),

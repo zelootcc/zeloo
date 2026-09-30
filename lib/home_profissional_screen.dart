@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'firebase_service.dart';
+import 'dados_profissionais.dart';
 import 'meus_servicos_screen.dart';
 import 'pedidos_profissional_screen.dart';
 import 'perfil_profissional_screen.dart';
@@ -67,7 +68,7 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
 
         final dados = snapshot.data!.data()!;
         final nome = _texto(dados, 'nome', 'Profissional');
-        final area = _texto(dados, 'area', 'Serviço');
+        final area = lerAreas(dados).isEmpty ? 'Serviço' : lerAreas(dados).join(' • ');
         final avaliacao = _numero(dados, 'avaliacao');
         final preco = _numero(dados, 'precoHora');
         final disponivel = dados['disponivel'] == true;

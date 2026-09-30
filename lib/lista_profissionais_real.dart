@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'agendamento_screen.dart';
 import 'firebase_service.dart';
 import 'profissional_model.dart';
+import 'dados_profissionais.dart';
 
 class ListaProfissionaisRealScreen extends StatefulWidget {
   final String? filtroEspecialidade;
@@ -21,14 +22,7 @@ class _ListaProfissionaisRealScreenState
 
   static const filtros = [
     'Todos',
-    'Eletricista',
-    'Encanador',
-    'Limpeza',
-    'Mecânico',
-    'Pintor',
-    'Jardineiro',
-    'Marceneiro',
-    'Serviços Gerais',
+    ...areasAtuacao,
   ];
 
   @override
@@ -80,7 +74,7 @@ class _ListaProfissionaisRealScreenState
                 final cidade = profissional.cidade.toLowerCase();
 
                 final correspondeFiltro =
-                    filtro == 'Todos' || especialidade == filtro.toLowerCase();
+                    filtro == 'Todos' || profissional.areas.any((area) => area.toLowerCase() == filtro.toLowerCase());
                 final correspondeBusca =
                     query.isEmpty ||
                     nome.contains(query) ||

@@ -1,7 +1,10 @@
+import 'dados_profissionais.dart';
+
 class ProfissionalModel {
   final String id;
   final String nome;
   final String especialidade;
+  final List<String> areas;
   final double avaliacao;
   final int totalAvaliacoes;
   final String cidade;
@@ -13,6 +16,7 @@ class ProfissionalModel {
     required this.id,
     required this.nome,
     required this.especialidade,
+    this.areas = const [],
     required this.avaliacao,
     required this.totalAvaliacoes,
     required this.cidade,
@@ -52,9 +56,8 @@ class ProfissionalModel {
     return ProfissionalModel(
       id: id,
       nome: dados['nome']?.toString() ?? 'Profissional',
-      especialidade: dados['area']?.toString() ??
-          dados['especialidade']?.toString() ??
-          'Serviço',
+      especialidade: lerAreas(dados).isEmpty ? 'Serviço' : lerAreas(dados).join(' • '),
+      areas: lerAreas(dados),
       avaliacao: avaliacao,
       totalAvaliacoes: totalAvaliacoes,
       cidade: dados['regiao']?.toString() ??

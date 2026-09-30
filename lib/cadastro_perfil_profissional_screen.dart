@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'firebase_service.dart';
+import 'dados_profissionais.dart';
+import 'campos_profissionais.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -19,9 +21,9 @@ class CadastroPerfilProfissionalScreen extends StatefulWidget {
 class _CadastroPerfilProfissionalScreenState
     extends State<CadastroPerfilProfissionalScreen> {
   final _nomeCtrl = TextEditingController();
-  final _areaCtrl = TextEditingController();
+  List<String> _areasSelecionadas = [];
   final _regiaoCtrl = TextEditingController();
-  final _disponibilidadeCtrl = TextEditingController();
+  Map<String, HorarioAtendimento> _horarios = {};
   final _pagamentoCtrl = TextEditingController();
   final _descricaoCtrl = TextEditingController();
   final _precoCtrl = TextEditingController();
@@ -47,9 +49,9 @@ class _CadastroPerfilProfissionalScreenState
       if (!mounted) return;
 
       _nomeCtrl.text = dados['nome']?.toString() ?? '';
-      _areaCtrl.text = dados['area']?.toString() ?? '';
+      _areasSelecionadas = lerAreas(dados).where(areasAtuacao.contains).take(3).toList();
       _regiaoCtrl.text = dados['regiao']?.toString() ?? '';
-      _disponibilidadeCtrl.text = dados['disponibilidade']?.toString() ?? '';
+      _horarios = lerHorarios(dados);
       _pagamentoCtrl.text = dados['pagamento']?.toString() ?? '';
       _descricaoCtrl.text = dados['descricao']?.toString() ?? '';
       _precoCtrl.text = dados['precoHora']?.toString() ?? '';
@@ -65,7 +67,7 @@ class _CadastroPerfilProfissionalScreenState
   }
 
   Future<void> _salvar() async {
-    if (_nomeCtrl.text.trim().isEmpty || _areaCtrl.text.trim().isEmpty) {
+    if (_nomeCtrl.text.trim().isEmpty || _areasSelecionadas.isEmpty) {
       _snack('Preencha os campos obrigatórios.', erro: true);
       return;
     }
@@ -84,11 +86,13 @@ class _CadastroPerfilProfissionalScreenState
     try {
       await FirebaseService.atualizarUsuario({
         'nome': _nomeCtrl.text.trim(),
-        'area': _areaCtrl.text.trim(),
-        'especialidade': _areaCtrl.text.trim(),
+        'area': _areasSelecionadas.first,
+        'areasAtuacao': _areasSelecionadas,
+        'especialidade': _areasSelecionadas.first,
         'regiao': _regiaoCtrl.text.trim(),
         'cidade': _regiaoCtrl.text.trim(),
-        'disponibilidade': _disponibilidadeCtrl.text.trim(),
+        'disponibilidade': resumoHorarios(_horarios),
+        'horariosAtendimento': _horarios.map((dia, horario) => MapEntry(dia, horario.toMap())),
         'pagamento': _pagamentoCtrl.text.trim(),
         'descricao': _descricaoCtrl.text.trim(),
         'precoHora': preco,
@@ -120,9 +124,7 @@ class _CadastroPerfilProfissionalScreenState
   @override
   void dispose() {
     _nomeCtrl.dispose();
-    _areaCtrl.dispose();
     _regiaoCtrl.dispose();
-    _disponibilidadeCtrl.dispose();
     _pagamentoCtrl.dispose();
     _descricaoCtrl.dispose();
     _precoCtrl.dispose();
@@ -192,11 +194,12 @@ class _CadastroPerfilProfissionalScreenState
                     _nomeCtrl,
                     Icons.person_outline_rounded,
                   ),
-                  _campo(
-                    'Área de atuação *',
-                    _areaCtrl,
-                    Icons.work_outline_rounded,
+                  SeletorAreas(
+                    selecionadas: _areasSelecionadas,
+                    enabled: !_salvando,
+                    onChanged: (areas) => setState(() => _areasSelecionadas = areas),
                   ),
+                  const SizedBox(height: 16),
                   _campo(
                     'Região de atendimento',
                     _regiaoCtrl,
@@ -205,11 +208,14 @@ class _CadastroPerfilProfissionalScreenState
                   const SizedBox(height: 12),
                   const _Secao('Sobre o Trabalho'),
                   const SizedBox(height: 14),
-                  _campo(
-                    'Disponibilidade',
-                    _disponibilidadeCtrl,
-                    Icons.schedule_outlined,
+                  const Text('Disponibilidade', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  SeletorDisponibilidade(
+                    horarios: _horarios,
+                    enabled: !_salvando,
+                    onChanged: (horarios) => setState(() => _horarios = horarios),
                   ),
+                  const SizedBox(height: 16),
                   _campo(
                     'Opções de pagamento',
                     _pagamentoCtrl,

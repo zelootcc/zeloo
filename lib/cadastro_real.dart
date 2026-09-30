@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dados_profissionais.dart';
+import 'campos_profissionais.dart';
+import 'telefone_formatter.dart';
 
 class CadastroScreen extends StatefulWidget {
   final bool isProfissional;
@@ -24,26 +28,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
   final _descricaoCtrl = TextEditingController();
   final _precoCtrl = TextEditingController();
 
-  static const _areas = [
-    'Eletricista',
-    'Encanador',
-    'Mecânico',
-    'Pintor',
-    'Diarista',
-    'Jardineiro',
-    'Marceneiro',
-    'Pedreiro',
-    'Serviços Gerais',
-  ];
-
-  static const _disponibilidades = [
-    'Segunda a Sexta, 8h–18h',
-    'Segunda a Sábado, 8h–18h',
-    'Finais de semana',
-    'Período integral (todos os dias)',
-    'Sob consulta',
-  ];
-
   static const _pagamentos = [
     'PIX',
     'Dinheiro',
@@ -52,8 +36,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
     'Boleto',
   ];
 
-  String? _area;
-  String? _disponibilidade;
+  List<String> _areasSelecionadas = [];
+  Map<String, HorarioAtendimento> _horarios = {};
   String? _pagamento;
 
   bool _showSenha = false;
@@ -108,16 +92,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
     return colors[score - 1];
   }
 
-  String _formatTelefone(String val) {
-    final d = val.replaceAll(RegExp(r'\D'), '');
-    if (d.length <= 2) return d;
-    if (d.length <= 7) return '(${d.substring(0, 2)}) ${d.substring(2)}';
-    if (d.length <= 11) {
-      return '(${d.substring(0, 2)}) ${d.substring(2, 7)}-${d.substring(7)}';
-    }
-    return val;
-  }
-
   String _formatCpfCnpj(String val) {
     final d = val.replaceAll(RegExp(r'\D'), '');
     if (d.length <= 11) {
@@ -155,10 +129,14 @@ class _CadastroScreenState extends State<CadastroScreen> {
       setState(() => _erro = 'Digite um email válido.');
       return;
     }
+    if (!TelefoneFormatter.valido(_telefoneCtrl.text)) {
+      setState(() => _erro = 'Informe o telefone com DDD e 10 ou 11 dígitos.');
+      return;
+    }
     if (_isPro &&
         (_cpfCnpjCtrl.text.trim().isEmpty ||
             _nascimentoCtrl.text.trim().isEmpty ||
-            _area == null ||
+            _areasSelecionadas.isEmpty ||
             _regiaoCtrl.text.trim().isEmpty)) {
       setState(() => _erro = 'Preencha todos os dados profissionais.');
       return;
@@ -197,11 +175,13 @@ class _CadastroScreenState extends State<CadastroScreen> {
         dados.addAll({
           'cpfCnpj': _cpfCnpjCtrl.text.trim(),
           'nascimento': _nascimentoCtrl.text.trim(),
-          'area': _area,
-          'especialidade': _area,
+          'area': _areasSelecionadas.first,
+          'areasAtuacao': _areasSelecionadas,
+          'especialidade': _areasSelecionadas.first,
           'regiao': _regiaoCtrl.text.trim(),
           'cidade': _regiaoCtrl.text.trim(),
-          'disponibilidade': _disponibilidade ?? 'Sob consulta',
+          'disponibilidade': resumoHorarios(_horarios),
+          'horariosAtendimento': _horarios.map((dia, horario) => MapEntry(dia, horario.toMap())),
           'pagamento': _pagamento ?? 'PIX',
           'descricao': _descricaoCtrl.text.trim(),
           'precoHora':
@@ -327,15 +307,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
                 controller: _telefoneCtrl,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
-                onChanged: (v) {
-                  final f = _formatTelefone(v);
-                  if (f != v) {
-                    _telefoneCtrl.value = TextEditingValue(
-                      text: f,
-                      selection: TextSelection.collapsed(offset: f.length),
-                    );
-                  }
-                },
+                inputFormatters: const [TelefoneFormatter()],
               ),
               const SizedBox(height: 16),
 
@@ -669,11 +641,10 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
         _label('Área de atuação *'),
         const SizedBox(height: 6),
-        _buildDropdown(
-          valor: _area,
-          itens: _areas,
-          prefixIcon: Icons.work_outline,
-          onChanged: (v) => setState(() => _area = v),
+        SeletorAreas(
+          selecionadas: _areasSelecionadas,
+          enabled: !_loading,
+          onChanged: (areas) => setState(() => _areasSelecionadas = areas),
         ),
         const SizedBox(height: 16),
 
@@ -688,11 +659,10 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
         _label('Disponibilidade'),
         const SizedBox(height: 6),
-        _buildDropdown(
-          valor: _disponibilidade,
-          itens: _disponibilidades,
-          prefixIcon: Icons.schedule_outlined,
-          onChanged: (v) => setState(() => _disponibilidade = v),
+        SeletorDisponibilidade(
+          horarios: _horarios,
+          enabled: !_loading,
+          onChanged: (horarios) => setState(() => _horarios = horarios),
         ),
         const SizedBox(height: 16),
 
@@ -740,6 +710,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
   Widget _buildField({
     required TextEditingController controller,
+    List<TextInputFormatter>? inputFormatters,
     TextInputType keyboardType = TextInputType.text,
     required IconData prefixIcon,
     bool obscureText = false,
@@ -751,6 +722,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
   }) {
     return TextField(
       controller: controller,
+      inputFormatters: inputFormatters,
       keyboardType: keyboardType,
       obscureText: obscureText,
       maxLines: obscureText ? 1 : linhas,
@@ -759,7 +731,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
         filled: true,
-        fillColor: const Color(0xFFE8E8E8),
+        fillColor: const Color(0xFFF0F6FA),
         prefixIcon: Icon(prefixIcon, color: const Color(0xFF888888), size: 20),
         suffixIcon: suffixIcon,
         focusedBorder: OutlineInputBorder(
@@ -794,7 +766,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
         hintText: 'Selecione',
         hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
         filled: true,
-        fillColor: const Color(0xFFE8E8E8),
+        fillColor: const Color(0xFFF0F6FA),
         prefixIcon: Icon(prefixIcon, color: const Color(0xFF888888), size: 20),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
