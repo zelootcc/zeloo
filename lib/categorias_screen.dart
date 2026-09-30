@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dados_profissionais.dart';
 import 'Login.dart';
 import 'lista_profissionais_real.dart';
 
@@ -33,6 +34,10 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     _Categoria('Pintor', Icons.format_paint, const Color(0xFFAB47BC)),
     _Categoria('Jardineiro', Icons.yard, const Color(0xFF4CAF50)),
     _Categoria('Marceneiro', Icons.chair, const Color(0xFF795548)),
+    for (final area in areasAtuacao)
+      if (!const ['Eletricista', 'Encanador', 'Limpeza', 'Mecânico',
+        'Serviços Gerais', 'Pintor', 'Jardineiro', 'Marceneiro'].contains(area))
+        _Categoria(area, Icons.home_repair_service, const Color(0xFF0077B6)),
   ];
 
   final TextEditingController _searchController = TextEditingController();
@@ -285,7 +290,7 @@ void _mostrarAlertaConta(BuildContext context) {
                 crossAxisCount: 2,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
-                childAspectRatio: 0.95,
+                mainAxisExtent: 230,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _CategoriaCard(
@@ -413,6 +418,8 @@ class _CategoriaCardState extends State<_CategoriaCard> {
 
               Text(
                 widget.categoria.label,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,

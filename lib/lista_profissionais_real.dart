@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'dados_profissionais.dart';
 import 'agendamento_screen.dart';
 import 'firebase_service.dart';
 import 'profissional_model.dart';
@@ -19,17 +21,7 @@ class _ListaProfissionaisRealScreenState
   String query = '';
   late String filtro;
 
-  static const filtros = [
-    'Todos',
-    'Eletricista',
-    'Encanador',
-    'Limpeza',
-    'Mecânico',
-    'Pintor',
-    'Jardineiro',
-    'Marceneiro',
-    'Serviços Gerais',
-  ];
+  static const filtros = ['Todos', ...areasAtuacao];
 
   @override
   void initState() {
@@ -80,7 +72,10 @@ class _ListaProfissionaisRealScreenState
                 final cidade = profissional.cidade.toLowerCase();
 
                 final correspondeFiltro =
-                    filtro == 'Todos' || especialidade == filtro.toLowerCase();
+                    filtro == 'Todos' ||
+                    profissional.areas.any(
+                      (area) => area.toLowerCase() == filtro.toLowerCase(),
+                    );
                 final correspondeBusca =
                     query.isEmpty ||
                     nome.contains(query) ||

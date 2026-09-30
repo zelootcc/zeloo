@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'firebase_service.dart';
+import 'telefone_formatter.dart';
 
 class PerfilEditarScreen extends StatefulWidget {
   const PerfilEditarScreen({super.key});
@@ -54,6 +56,10 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
     if (_loading) return;
     if (_nomeCtrl.text.trim().isEmpty) {
       _mostrarErro('Informe seu nome.');
+      return;
+    }
+    if (!telefoneValido(_telefoneCtrl.text)) {
+      _mostrarErro('Informe um telefone com DDD e 10 ou 11 dígitos.');
       return;
     }
     final emailRegex = RegExp(r'^\S+@\S+\.\S+$');
@@ -278,6 +284,9 @@ class _Campo extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: tipo,
+      inputFormatters: tipo == TextInputType.phone
+          ? [TelefoneFormatter()]
+          : null,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),

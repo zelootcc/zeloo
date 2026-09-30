@@ -1,7 +1,10 @@
+import 'dados_profissionais.dart';
+
 class ProfissionalModel {
   final String id;
   final String nome;
   final String especialidade;
+  final List<String> areas;
   final double avaliacao;
   final int totalAvaliacoes;
   final String cidade;
@@ -13,6 +16,7 @@ class ProfissionalModel {
     required this.id,
     required this.nome,
     required this.especialidade,
+    this.areas = const [],
     required this.avaliacao,
     required this.totalAvaliacoes,
     required this.cidade,
@@ -28,10 +32,7 @@ class ProfissionalModel {
     final valor = dados['precoHora'] ?? dados['valorHora'] ?? dados['preco'];
     final preco = valor is num
         ? valor.toDouble()
-        : double.tryParse(
-              valor?.toString().replaceAll(',', '.') ?? '',
-            ) ??
-            0;
+        : double.tryParse(valor?.toString().replaceAll(',', '.') ?? '') ?? 0;
 
     final avaliacao = dados['avaliacao'] is num
         ? (dados['avaliacao'] as num).toDouble()
@@ -49,18 +50,20 @@ class ProfissionalModel {
         : !disponibilidade.contains('ocupado') &&
               !disponibilidade.contains('indispon');
 
+    final areas = lerAreas(dados);
     return ProfissionalModel(
       id: id,
       nome: dados['nome']?.toString() ?? 'Profissional',
-      especialidade: dados['area']?.toString() ??
-          dados['especialidade']?.toString() ??
-          'Serviço',
+      especialidade: areas.isEmpty ? 'Serviço' : areas.join(', '),
+      areas: areas,
       avaliacao: avaliacao,
       totalAvaliacoes: totalAvaliacoes,
-      cidade: dados['regiao']?.toString() ??
+      cidade:
+          dados['regiao']?.toString() ??
           dados['cidade']?.toString() ??
           'Não informado',
-      descricao: dados['descricao']?.toString() ??
+      descricao:
+          dados['descricao']?.toString() ??
           dados['descricaoProfissional']?.toString() ??
           'Profissional cadastrado na Zeloo.',
       precoHora: preco,

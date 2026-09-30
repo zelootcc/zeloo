@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'firebase_service.dart';
+import 'dados_profissionais.dart';
+import 'campos_profissionais.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -19,9 +21,11 @@ class CadastroPerfilProfissionalScreen extends StatefulWidget {
 class _CadastroPerfilProfissionalScreenState
     extends State<CadastroPerfilProfissionalScreen> {
   final _nomeCtrl = TextEditingController();
-  final _areaCtrl = TextEditingController();
+  List<String> _areas = [];
+  Map<String, HorarioAtendimento> _horarios = {};
+  String? _avisoAntigo;
+  bool _erroCarregamento = false;
   final _regiaoCtrl = TextEditingController();
-  final _disponibilidadeCtrl = TextEditingController();
   final _pagamentoCtrl = TextEditingController();
   final _descricaoCtrl = TextEditingController();
   final _precoCtrl = TextEditingController();
@@ -36,6 +40,10 @@ class _CadastroPerfilProfissionalScreenState
   }
 
   Future<void> _carregarDados() async {
+    setState(() {
+      _loading = true;
+      _erroCarregamento = false;
+    });
     try {
       final documento = await FirebaseService.dadosProfissional();
 
@@ -47,14 +55,29 @@ class _CadastroPerfilProfissionalScreenState
       if (!mounted) return;
 
       _nomeCtrl.text = dados['nome']?.toString() ?? '';
-      _areaCtrl.text = dados['area']?.toString() ?? '';
+      final antigas = lerAreas(dados);
+      _areas = antigas.where(areasAtuacao.contains).take(3).toList();
+      _horarios = lerHorarios(dados);
+      final avisos = <String>[];
+      if (antigas.any((area) => !areasAtuacao.contains(area)) ||
+          antigas.length > 3) {
+        avisos.add(
+          'Áreas anteriores: ${antigas.join(', ')}. Escolha até 3 opções da lista.',
+        );
+      }
+      if (_horarios.isEmpty && dados['disponibilidade'] != null) {
+        avisos.add(
+          'Disponibilidade anterior: ${dados['disponibilidade']}. Defina os dias e horários abaixo.',
+        );
+      }
+      _avisoAntigo = avisos.isEmpty ? null : avisos.join('\n');
       _regiaoCtrl.text = dados['regiao']?.toString() ?? '';
-      _disponibilidadeCtrl.text = dados['disponibilidade']?.toString() ?? '';
       _pagamentoCtrl.text = dados['pagamento']?.toString() ?? '';
       _descricaoCtrl.text = dados['descricao']?.toString() ?? '';
       _precoCtrl.text = dados['precoHora']?.toString() ?? '';
     } catch (e) {
       if (mounted) {
+        _erroCarregamento = true;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Erro ao carregar perfil: $e')));
@@ -65,8 +88,19 @@ class _CadastroPerfilProfissionalScreenState
   }
 
   Future<void> _salvar() async {
-    if (_nomeCtrl.text.trim().isEmpty || _areaCtrl.text.trim().isEmpty) {
-      _snack('Preencha os campos obrigatórios.', erro: true);
+    if (_salvando) return;
+    if (_nomeCtrl.text.trim().isEmpty) {
+      _snack('Informe seu nome de preferência.', erro: true);
+      return;
+    }
+    if (!areasValidas(_areas)) {
+      _snack('Selecione de 1 a 3 áreas da lista.', erro: true);
+      return;
+    }
+
+    final erroHorario = validarHorarios(_horarios);
+    if (erroHorario != null) {
+      _snack(erroHorario, erro: true);
       return;
     }
 
@@ -84,11 +118,9 @@ class _CadastroPerfilProfissionalScreenState
     try {
       await FirebaseService.atualizarUsuario({
         'nome': _nomeCtrl.text.trim(),
-        'area': _areaCtrl.text.trim(),
-        'especialidade': _areaCtrl.text.trim(),
+        ...dadosAtuacao(_areas, _horarios),
         'regiao': _regiaoCtrl.text.trim(),
         'cidade': _regiaoCtrl.text.trim(),
-        'disponibilidade': _disponibilidadeCtrl.text.trim(),
         'pagamento': _pagamentoCtrl.text.trim(),
         'descricao': _descricaoCtrl.text.trim(),
         'precoHora': preco,
@@ -120,9 +152,7 @@ class _CadastroPerfilProfissionalScreenState
   @override
   void dispose() {
     _nomeCtrl.dispose();
-    _areaCtrl.dispose();
     _regiaoCtrl.dispose();
-    _disponibilidadeCtrl.dispose();
     _pagamentoCtrl.dispose();
     _descricaoCtrl.dispose();
     _precoCtrl.dispose();
@@ -135,6 +165,18 @@ class _CadastroPerfilProfissionalScreenState
       return const Scaffold(
         backgroundColor: Color(0xFFF4F7FB),
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_erroCarregamento) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Editar perfil profissional')),
+        body: Center(
+          child: TextButton(
+            onPressed: _carregarDados,
+            child: const Text('Não foi possível carregar. Tentar novamente'),
+          ),
+        ),
       );
     }
 
@@ -192,11 +234,16 @@ class _CadastroPerfilProfissionalScreenState
                     _nomeCtrl,
                     Icons.person_outline_rounded,
                   ),
-                  _campo(
-                    'Área de atuação *',
-                    _areaCtrl,
-                    Icons.work_outline_rounded,
+                  if (_avisoAntigo != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(_avisoAntigo!),
+                    ),
+                  SeletorAreas(
+                    selecionadas: _areas,
+                    onChanged: (v) => setState(() => _areas = v),
                   ),
+                  const SizedBox(height: 16),
                   _campo(
                     'Região de atendimento',
                     _regiaoCtrl,
@@ -205,11 +252,11 @@ class _CadastroPerfilProfissionalScreenState
                   const SizedBox(height: 12),
                   const _Secao('Sobre o Trabalho'),
                   const SizedBox(height: 14),
-                  _campo(
-                    'Disponibilidade',
-                    _disponibilidadeCtrl,
-                    Icons.schedule_outlined,
+                  SeletorHorarios(
+                    horarios: _horarios,
+                    onChanged: (v) => setState(() => _horarios = v),
                   ),
+                  const SizedBox(height: 16),
                   _campo(
                     'Opções de pagamento',
                     _pagamentoCtrl,
