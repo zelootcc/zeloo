@@ -28,17 +28,9 @@ class _CadastroScreenState extends State<CadastroScreen> {
   final _descricaoCtrl = TextEditingController();
   final _precoCtrl = TextEditingController();
 
-  static const _pagamentos = [
-    'PIX',
-    'Dinheiro',
-    'Cartão de Crédito',
-    'Cartão de Débito',
-    'Boleto',
-  ];
-
   List<String> _areasSelecionadas = [];
   Map<String, HorarioAtendimento> _horarios = {};
-  String? _pagamento;
+  List<String> _pagamentosSelecionados = [];
 
   bool _showSenha = false;
   bool _showConfirmar = false;
@@ -181,12 +173,15 @@ class _CadastroScreenState extends State<CadastroScreen> {
           'regiao': _regiaoCtrl.text.trim(),
           'cidade': _regiaoCtrl.text.trim(),
           'disponibilidade': resumoHorarios(_horarios),
-          'horariosAtendimento': _horarios.map((dia, horario) => MapEntry(dia, horario.toMap())),
-          'pagamento': _pagamento ?? 'PIX',
+          'horariosAtendimento': _horarios.map(
+            (dia, horario) => MapEntry(dia, horario.toMap()),
+          ),
+          'pagamento': _pagamentosSelecionados.join(', '),
+          'pagamentos': _pagamentosSelecionados,
           'descricao': _descricaoCtrl.text.trim(),
           'precoHora':
               double.tryParse(_precoCtrl.text.trim().replaceAll(',', '.')) ??
-                  0.0,
+              0.0,
           'disponivel': true,
           'avaliacao': 0.0,
           'totalAvaliacoes': 0,
@@ -666,13 +661,11 @@ class _CadastroScreenState extends State<CadastroScreen> {
         ),
         const SizedBox(height: 16),
 
-        _label('Forma de pagamento'),
-        const SizedBox(height: 6),
-        _buildDropdown(
-          valor: _pagamento,
-          itens: _pagamentos,
-          prefixIcon: Icons.payments_outlined,
-          onChanged: (v) => setState(() => _pagamento = v),
+        SeletorPagamentos(
+          selecionadas: _pagamentosSelecionados,
+          enabled: !_loading,
+          onChanged: (pagamentos) =>
+              setState(() => _pagamentosSelecionados = pagamentos),
         ),
         const SizedBox(height: 16),
 
@@ -744,48 +737,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
       ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String? valor,
-    required List<String> itens,
-    required IconData prefixIcon,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      initialValue: valor,
-      isExpanded: true,
-      onChanged: onChanged,
-      borderRadius: BorderRadius.circular(12),
-      icon: const Icon(
-        Icons.keyboard_arrow_down_rounded,
-        color: Color(0xFF888888),
-      ),
-      decoration: InputDecoration(
-        hintText: 'Selecione',
-        hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
-        filled: true,
-        fillColor: const Color(0xFFF0F6FA),
-        prefixIcon: Icon(prefixIcon, color: const Color(0xFF888888), size: 20),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF00B4D8), width: 2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-      ),
-      items: itens
-          .map(
-            (item) => DropdownMenuItem(
-              value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
     );
   }
 

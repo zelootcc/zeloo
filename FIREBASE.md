@@ -12,6 +12,7 @@ O aplicativo utiliza o projeto existente `zeloo-5aac7`, configurado em
 | Início, perfil e edição do profissional, busca de profissionais | `Profissionais/{uid}` |
 | Serviços e seleção do serviço no agendamento | `Servicos` |
 | Agendamento, pedidos do cliente e pedidos do profissional | `Pedidos` |
+| Avaliações dos serviços concluídos | `Avaliacoes/{pedidoId}` |
 | Endereços e identificação dos cartões | `ConfiguracoesUsuarios/{uid}` |
 | Preferências de notificações | `ConfiguracoesUsuarios/{uid}.notificacoes` |
 
@@ -37,6 +38,66 @@ Perfis antigos continuam legíveis. As opções antigas com intervalo explícito
 antigos não permitem inferir horários: o profissional deve selecionar seus dias.
 As regras existentes já permitem salvar esses campos; não é necessário novo deploy.
 
+As formas aceitas ficam em `pagamentos` como uma lista (PIX, dinheiro, cartões,
+transferência bancária e boleto). O campo antigo `pagamento` continua sendo salvo
+com o resumo em texto para manter compatibilidade com perfis existentes.
+
+## Notificações de pedidos
+
+Ao criar um pedido, o aplicativo grava uma notificação em `Notificacoes` no mesmo
+lote do pedido. O profissional vê essa notificação na central pelo botão no canto
+superior direito da tela inicial; o contador mostra itens ainda não lidos. O token
+do celular fica em `Dispositivos/{uid}` e nunca é exibido a outros usuários.
+
+O código da Cloud Function está em `functions/index.js`. Ela observa as notificações
+das etapas do pedido e envia o push via Firebase Cloud Messaging, removendo tokens
+inválidos. Cliente e profissional possuem um botão com contador para abrir a central.
+As regras do Firestore já foram publicadas e a central funciona imediatamente.
+
+A publicação da Cloud Function foi bloqueada pelo Firebase porque o projeto
+`zeloo-5aac7` está no plano Spark. O Firebase exige o plano Blaze para habilitar
+Cloud Functions e Artifact Registry. Para ativar o push real, faça o upgrade em
+`https://console.firebase.google.com/project/zeloo-5aac7/usage/details` e execute:
+
+```sh
+firebase deploy --only functions --project zeloo-5aac7
+```
+
+Não coloque chaves privadas do FCM no aplicativo. O push só deve ser enviado pela
+Cloud Function; o aplicativo registra somente o token do próprio usuário.
+
+## Fluxo dos pedidos e código de início
+
+Pedidos novos passam por `aguardando`, `aceito`, `a_caminho`,
+`aguardando_codigo`, `em_andamento`, `aguardando_conclusao` e `concluido`.
+Também podem terminar como `cancelado`, sempre com um motivo. Cada mudança guarda
+o horário correspondente usando o relógio do Firestore.
+
+O código de quatro dígitos é criado junto com o pedido em
+`CodigosPedidos/{pedidoId}`. Somente o cliente pode ler esse documento. O
+profissional envia o número digitado e as regras do Firestore fazem a comparação;
+cinco erros bloqueiam novas tentativas até o cliente gerar outro código. Quando o
+código está correto, o pedido muda para `em_andamento` e `iniciadoEm` inicia o
+cronômetro exibido nas duas contas.
+
+O profissional solicita a conclusão e o cliente precisa confirmá-la. O aplicativo
+grava notificações de pedido aceito, deslocamento, chegada, início, solicitação de
+conclusão, conclusão, cancelamento e renovação do código. Pedidos antigos com o
+status `confirmado` continuam sendo tratados como aceitos.
+
+## Avaliações e relatórios
+
+Depois de confirmar a conclusão, o cliente pode escolher de uma a cinco estrelas e
+escrever um comentário opcional de até 300 caracteres. Cada pedido usa seu próprio
+ID em `Avaliacoes`, então só pode receber uma avaliação. A mesma transação atualiza
+`avaliacao`, `somaAvaliacoes` e `totalAvaliacoes` no perfil do profissional.
+
+A tela de avaliações lista as notas e comentários recebidos. O relatório usa apenas
+pedidos com status `concluido` e calcula o total dos últimos sete dias, o total do
+mês atual, a média por serviço no mês e a média diária considerando os dias já
+decorridos. Pedidos concluídos antes deste fluxo usam `atualizadoEm` quando não têm
+o campo `concluidoEm`.
+
 ## Configurações privadas
 
 O documento é criado na primeira gravação. Não requer preenchimento manual nem
@@ -52,8 +113,8 @@ Configurações de profissionais ficam separadas de seus perfis, que são consul
 por outros usuários autenticados.
 
 Cartões armazenam somente identificação. Não há tokenização nem cobrança implementada.
-Salvar preferências não envia SMS, e-mail ou push; o projeto ainda não contém um
-serviço de envio de notificações. Alterações de senha usam reautenticação no Firebase
+Salvar preferências de notificações não envia SMS ou e-mail por si só; pedidos usam a
+central do aplicativo e o fluxo de push FCM descrito acima. Alterações de senha usam reautenticação no Firebase
 Auth, e mudanças de e-mail exigem confirmação do link enviado ao novo endereço.
 
 ## Regras publicadas

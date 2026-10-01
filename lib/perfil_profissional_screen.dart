@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'botao_voltar.dart';
 
+import 'avaliacoes_profissional_screen.dart';
 import 'cadastro_perfil_profissional_screen.dart';
 import 'firebase_service.dart';
 import 'dados_profissionais.dart';
 import 'meus_servicos_screen.dart';
 import 'pedidos_profissional_screen.dart';
 import 'perfil_notificacoes_screen.dart';
+import 'relatorios_profissional_screen.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -86,7 +88,9 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
 
           final dados = snapshot.data!.data()!;
           final nome = _texto(dados, 'nome', 'Profissional');
-          final especialidade = lerAreas(dados).isEmpty ? 'Serviço' : lerAreas(dados).join(' • ');
+          final especialidade = lerAreas(dados).isEmpty
+              ? 'Serviço'
+              : lerAreas(dados).join(' • ');
           final email =
               FirebaseService.usuario?.email ?? _texto(dados, 'email');
           final avaliacao = _numero(dados, 'avaliacao');
@@ -111,12 +115,12 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
               children: [
                 ComBotaoVoltar(
                   child: _HeaderPerfil(
-                  nome: nome,
-                  especialidade: especialidade,
-                  email: email,
-                  iniciais: iniciais,
-                  disponivel: _disponivel,
-                  onToggle: _alternarDisponibilidade,
+                    nome: nome,
+                    especialidade: especialidade,
+                    email: email,
+                    iniciais: iniciais,
+                    disponivel: _disponivel,
+                    onToggle: _alternarDisponibilidade,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -201,14 +205,26 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
                         title: 'Avaliações',
                         subtitle: 'Veja o que clientes dizem',
                         cor: const Color(0xFFFFC107),
-                        onTap: () {},
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const AvaliacoesProfissionalScreen(),
+                          ),
+                        ),
                       ),
                       _MenuCard(
                         icon: Icons.bar_chart_rounded,
                         title: 'Relatórios',
                         subtitle: 'Acompanhe seus ganhos',
                         cor: const Color(0xFF4CAF50),
-                        onTap: () {},
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const RelatoriosProfissionalScreen(),
+                          ),
+                        ),
                       ),
                       _MenuCard(
                         icon: Icons.notifications_outlined,

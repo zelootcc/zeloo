@@ -24,7 +24,7 @@ class _CadastroPerfilProfissionalScreenState
   List<String> _areasSelecionadas = [];
   final _regiaoCtrl = TextEditingController();
   Map<String, HorarioAtendimento> _horarios = {};
-  final _pagamentoCtrl = TextEditingController();
+  List<String> _pagamentosSelecionados = [];
   final _descricaoCtrl = TextEditingController();
   final _precoCtrl = TextEditingController();
 
@@ -49,10 +49,12 @@ class _CadastroPerfilProfissionalScreenState
       if (!mounted) return;
 
       _nomeCtrl.text = dados['nome']?.toString() ?? '';
-      _areasSelecionadas = lerAreas(dados).where(areasAtuacao.contains).take(3).toList();
+      _areasSelecionadas = lerAreas(
+        dados,
+      ).where(areasAtuacao.contains).take(3).toList();
       _regiaoCtrl.text = dados['regiao']?.toString() ?? '';
       _horarios = lerHorarios(dados);
-      _pagamentoCtrl.text = dados['pagamento']?.toString() ?? '';
+      _pagamentosSelecionados = lerFormasPagamento(dados);
       _descricaoCtrl.text = dados['descricao']?.toString() ?? '';
       _precoCtrl.text = dados['precoHora']?.toString() ?? '';
     } catch (e) {
@@ -92,8 +94,11 @@ class _CadastroPerfilProfissionalScreenState
         'regiao': _regiaoCtrl.text.trim(),
         'cidade': _regiaoCtrl.text.trim(),
         'disponibilidade': resumoHorarios(_horarios),
-        'horariosAtendimento': _horarios.map((dia, horario) => MapEntry(dia, horario.toMap())),
-        'pagamento': _pagamentoCtrl.text.trim(),
+        'horariosAtendimento': _horarios.map(
+          (dia, horario) => MapEntry(dia, horario.toMap()),
+        ),
+        'pagamento': _pagamentosSelecionados.join(', '),
+        'pagamentos': _pagamentosSelecionados,
         'descricao': _descricaoCtrl.text.trim(),
         'precoHora': preco,
       });
@@ -125,7 +130,6 @@ class _CadastroPerfilProfissionalScreenState
   void dispose() {
     _nomeCtrl.dispose();
     _regiaoCtrl.dispose();
-    _pagamentoCtrl.dispose();
     _descricaoCtrl.dispose();
     _precoCtrl.dispose();
     super.dispose();
@@ -197,7 +201,8 @@ class _CadastroPerfilProfissionalScreenState
                   SeletorAreas(
                     selecionadas: _areasSelecionadas,
                     enabled: !_salvando,
-                    onChanged: (areas) => setState(() => _areasSelecionadas = areas),
+                    onChanged: (areas) =>
+                        setState(() => _areasSelecionadas = areas),
                   ),
                   const SizedBox(height: 16),
                   _campo(
@@ -208,18 +213,23 @@ class _CadastroPerfilProfissionalScreenState
                   const SizedBox(height: 12),
                   const _Secao('Sobre o Trabalho'),
                   const SizedBox(height: 14),
-                  const Text('Disponibilidade', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Disponibilidade',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   SeletorDisponibilidade(
                     horarios: _horarios,
                     enabled: !_salvando,
-                    onChanged: (horarios) => setState(() => _horarios = horarios),
+                    onChanged: (horarios) =>
+                        setState(() => _horarios = horarios),
                   ),
                   const SizedBox(height: 16),
-                  _campo(
-                    'Opções de pagamento',
-                    _pagamentoCtrl,
-                    Icons.payments_outlined,
+                  SeletorPagamentos(
+                    selecionadas: _pagamentosSelecionados,
+                    enabled: !_salvando,
+                    onChanged: (pagamentos) =>
+                        setState(() => _pagamentosSelecionados = pagamentos),
                   ),
                   _campo(
                     'Valor por hora (R\$)',

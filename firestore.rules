@@ -22,7 +22,33 @@ service cloud.firestore {
 
     match /Profissionais/{uid} {
       allow read: if autenticado();
-      allow create, update, delete: if donoDoPerfil(uid);
+      allow create, delete: if donoDoPerfil(uid);
+
+      function atualizacaoDeAvaliacaoValida() {
+        let pedidoId = request.resource.data.ultimaAvaliacaoPedidoId;
+        let avaliacao = getAfter(/databases/$(database)/documents/Avaliacoes/$(pedidoId)).data;
+        let totalAnterior = resource.data.get('totalAvaliacoes', 0);
+        let somaAnterior = resource.data.get('somaAvaliacoes',
+          resource.data.get('avaliacao', 0) * totalAnterior);
+        return avaliacao.clienteId == request.auth.uid &&
+          avaliacao.profissionalId == uid &&
+          avaliacao.pedidoId == pedidoId &&
+          resource.data.get('ultimaAvaliacaoPedidoId', '') != pedidoId &&
+          request.resource.data.totalAvaliacoes == totalAnterior + 1 &&
+          request.resource.data.somaAvaliacoes == somaAnterior + avaliacao.nota &&
+          request.resource.data.avaliacao ==
+            request.resource.data.somaAvaliacoes / request.resource.data.totalAvaliacoes &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'somaAvaliacoes',
+            'totalAvaliacoes',
+            'avaliacao',
+            'ultimaAvaliacaoPedidoId',
+            'atualizadoEm'
+          ]);
+      }
+
+      allow update: if donoDoPerfil(uid) ||
+        (autenticado() && atualizacaoDeAvaliacaoValida());
     }
 
     match /Servicos/{id} {
@@ -41,25 +67,200 @@ service cloud.firestore {
         (resource.data.clienteId == request.auth.uid ||
          resource.data.profissionalId == request.auth.uid);
 
-      allow update: if autenticado() && (
-        (
-          resource.data.profissionalId == request.auth.uid &&
-          request.resource.data.clienteId == resource.data.clienteId &&
+      function identidadeMantida() {
+        return request.resource.data.clienteId == resource.data.clienteId &&
           request.resource.data.profissionalId == resource.data.profissionalId &&
-          request.resource.data.servicoId == resource.data.servicoId &&
-          request.resource.data.status in ['aguardando', 'confirmado', 'cancelado', 'concluido']
+          request.resource.data.servicoId == resource.data.servicoId;
+      }
+
+      function mudouSomente(campos) {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
+      }
+
+      function motivoValido() {
+        return request.resource.data.motivoCancelamento is string &&
+          request.resource.data.motivoCancelamento.size() >= 3;
+      }
+
+      function codigoSalvo() {
+        return get(/databases/$(database)/documents/CodigosPedidos/$(id)).data.codigo;
+      }
+
+      allow update: if autenticado() && identidadeMantida() && (
+        // Ações realizadas pelo profissional.
+        (
+          resource.data.profissionalId == request.auth.uid && (
+            (
+              resource.data.status == 'aguardando' &&
+              request.resource.data.status == 'aceito' &&
+              mudouSomente(['status', 'aceitoEm', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status in ['aceito', 'confirmado'] &&
+              request.resource.data.status == 'a_caminho' &&
+              mudouSomente(['status', 'aCaminhoEm', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status == 'a_caminho' &&
+              request.resource.data.status == 'aguardando_codigo' &&
+              request.resource.data.tentativasCodigo == 0 &&
+              request.resource.data.codigoValidado == false &&
+              mudouSomente(['status', 'chegouEm', 'tentativasCodigo', 'codigoValidado', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status == 'aguardando_codigo' &&
+              resource.data.tentativasCodigo < 5 &&
+              request.resource.data.status == 'em_andamento' &&
+              request.resource.data.codigoVerificacaoInformado == codigoSalvo() &&
+              request.resource.data.codigoValidado == true &&
+              request.resource.data.tentativasCodigo == resource.data.tentativasCodigo + 1 &&
+              mudouSomente(['status', 'codigoVerificacaoInformado', 'codigoValidado', 'tentativasCodigo', 'iniciadoEm', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status == 'aguardando_codigo' &&
+              resource.data.tentativasCodigo < 5 &&
+              request.resource.data.status == resource.data.status &&
+              request.resource.data.codigoVerificacaoInformado != codigoSalvo() &&
+              request.resource.data.codigoValidado == false &&
+              request.resource.data.tentativasCodigo == resource.data.tentativasCodigo + 1 &&
+              mudouSomente(['codigoVerificacaoInformado', 'codigoValidado', 'tentativasCodigo', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status == 'em_andamento' &&
+              request.resource.data.status == 'aguardando_conclusao' &&
+              mudouSomente(['status', 'conclusaoSolicitadaEm', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status in ['aguardando', 'aceito', 'confirmado', 'a_caminho', 'aguardando_codigo'] &&
+              request.resource.data.status == 'cancelado' &&
+              request.resource.data.canceladoPor == request.auth.uid &&
+              motivoValido() &&
+              mudouSomente(['status', 'motivoCancelamento', 'canceladoPor', 'canceladoEm', 'atualizadoEm'])
+            )
+          )
         ) ||
+        // Ações realizadas pelo cliente.
         (
-          resource.data.clienteId == request.auth.uid &&
-          request.resource.data.clienteId == resource.data.clienteId &&
-          request.resource.data.profissionalId == resource.data.profissionalId &&
-          request.resource.data.servicoId == resource.data.servicoId &&
-          request.resource.data.status == 'cancelado'
+          resource.data.clienteId == request.auth.uid && (
+            (
+              resource.data.status == 'aguardando_conclusao' &&
+              request.resource.data.status == 'concluido' &&
+              mudouSomente(['status', 'concluidoEm', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status in ['aguardando', 'aceito', 'confirmado', 'a_caminho', 'aguardando_codigo'] &&
+              request.resource.data.status == 'cancelado' &&
+              request.resource.data.canceladoPor == request.auth.uid &&
+              motivoValido() &&
+              mudouSomente(['status', 'motivoCancelamento', 'canceladoPor', 'canceladoEm', 'atualizadoEm'])
+            ) ||
+            (
+              resource.data.status in ['aceito', 'confirmado', 'a_caminho', 'aguardando_codigo'] &&
+              request.resource.data.status == resource.data.status &&
+              request.resource.data.tentativasCodigo == 0 &&
+              request.resource.data.codigoValidado == false &&
+              mudouSomente(['tentativasCodigo', 'codigoValidado', 'codigoVerificacaoInformado', 'atualizadoEm'])
+            )
+          )
         )
       );
 
       allow delete: if autenticado() &&
         resource.data.clienteId == request.auth.uid;
+    }
+
+    match /CodigosPedidos/{pedidoId} {
+      function pedidoDepois() {
+        return getAfter(/databases/$(database)/documents/Pedidos/$(pedidoId)).data;
+      }
+
+      allow get: if autenticado() &&
+        get(/databases/$(database)/documents/Pedidos/$(pedidoId)).data.clienteId == request.auth.uid;
+      allow list: if false;
+
+      allow create: if autenticado() &&
+        request.resource.data.pedidoId == pedidoId &&
+        request.resource.data.clienteId == request.auth.uid &&
+        request.resource.data.profissionalId == pedidoDepois().profissionalId &&
+        pedidoDepois().clienteId == request.auth.uid &&
+        request.resource.data.codigo is string &&
+        request.resource.data.codigo.matches('^[0-9]{4}$');
+
+      allow update: if autenticado() &&
+        resource.data.clienteId == request.auth.uid &&
+        request.resource.data.pedidoId == resource.data.pedidoId &&
+        request.resource.data.clienteId == resource.data.clienteId &&
+        request.resource.data.profissionalId == resource.data.profissionalId &&
+        request.resource.data.codigo is string &&
+        request.resource.data.codigo.matches('^[0-9]{4}$') &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['codigo', 'atualizadoEm']);
+
+      allow delete: if autenticado() && resource.data.clienteId == request.auth.uid;
+    }
+
+    match /Avaliacoes/{pedidoId} {
+      function pedidoAvaliado() {
+        return get(/databases/$(database)/documents/Pedidos/$(pedidoId)).data;
+      }
+
+      allow get: if autenticado() &&
+        (pedidoAvaliado().clienteId == request.auth.uid ||
+         pedidoAvaliado().profissionalId == request.auth.uid);
+
+      allow list: if autenticado() &&
+        (resource.data.clienteId == request.auth.uid ||
+         resource.data.profissionalId == request.auth.uid);
+
+      allow create: if autenticado() &&
+        request.resource.data.pedidoId == pedidoId &&
+        request.resource.data.clienteId == request.auth.uid &&
+        pedidoAvaliado().clienteId == request.auth.uid &&
+        pedidoAvaliado().profissionalId == request.resource.data.profissionalId &&
+        pedidoAvaliado().status == 'concluido' &&
+        request.resource.data.clienteNome == pedidoAvaliado().get('clienteNome', 'Cliente') &&
+        request.resource.data.servico == pedidoAvaliado().get('servico', 'Serviço') &&
+        request.resource.data.nota is int &&
+        request.resource.data.nota >= 1 &&
+        request.resource.data.nota <= 5 &&
+        request.resource.data.comentario is string &&
+        request.resource.data.comentario.size() <= 300;
+
+      allow update, delete: if false;
+    }
+
+    match /Notificacoes/{id} {
+      allow read: if autenticado() && resource.data.destinatarioId == request.auth.uid;
+
+      function pedidoRelacionado() {
+        return getAfter(/databases/$(database)/documents/Pedidos/$(request.resource.data.pedidoId)).data;
+      }
+
+      allow create: if autenticado() &&
+        request.resource.data.remetenteId == request.auth.uid &&
+        request.resource.data.tipo is string &&
+        request.resource.data.titulo is string &&
+        request.resource.data.mensagem is string &&
+        (
+          (
+            pedidoRelacionado().clienteId == request.auth.uid &&
+            pedidoRelacionado().profissionalId == request.resource.data.destinatarioId
+          ) ||
+          (
+            pedidoRelacionado().profissionalId == request.auth.uid &&
+            pedidoRelacionado().clienteId == request.resource.data.destinatarioId
+          )
+        );
+      allow update: if autenticado() &&
+        resource.data.destinatarioId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lida']);
+      allow delete: if autenticado() && resource.data.destinatarioId == request.auth.uid;
+    }
+
+    match /Dispositivos/{uid} {
+      allow read: if false;
+      allow create, update: if donoDoPerfil(uid) &&
+        request.resource.data.keys().hasOnly(['tokens', 'atualizadoEm']);
+      allow delete: if donoDoPerfil(uid);
     }
   }
 }

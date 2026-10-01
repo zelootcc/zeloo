@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'firebase_service.dart';
 import 'dados_profissionais.dart';
+import 'botao_notificacoes.dart';
+import 'relatorios_profissional_screen.dart';
 import 'meus_servicos_screen.dart';
 import 'pedidos_profissional_screen.dart';
 import 'perfil_profissional_screen.dart';
@@ -68,7 +70,9 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
 
         final dados = snapshot.data!.data()!;
         final nome = _texto(dados, 'nome', 'Profissional');
-        final area = lerAreas(dados).isEmpty ? 'Serviço' : lerAreas(dados).join(' • ');
+        final area = lerAreas(dados).isEmpty
+            ? 'Serviço'
+            : lerAreas(dados).join(' • ');
         final avaliacao = _numero(dados, 'avaliacao');
         final preco = _numero(dados, 'precoHora');
         final disponivel = dados['disponivel'] == true;
@@ -88,57 +92,67 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                     ),
                   ),
                   padding: const EdgeInsets.fromLTRB(24, 48, 24, 28),
-                  child: Column(
+                  child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      Image.asset('assets/imagens/logo.png', height: 80),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Olá, ${nome.split(' ').first}! 👋',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        area,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.circle,
-                              color: disponivel
-                                  ? const Color(0xFF4CAF50)
-                                  : Colors.white54,
-                              size: 8,
+                      Column(
+                        children: [
+                          Image.asset('assets/imagens/logo.png', height: 80),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Olá, ${nome.split(' ').first}! 👋',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              disponivel ? 'Disponível' : 'Indisponível',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            area,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.circle,
+                                  color: disponivel
+                                      ? const Color(0xFF4CAF50)
+                                      : Colors.white54,
+                                  size: 8,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  disponivel ? 'Disponível' : 'Indisponível',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Positioned(
+                        top: 0,
+                        right: 0,
+                        child: BotaoNotificacoes(),
                       ),
                     ],
                   ),
@@ -237,14 +251,15 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             ),
                           ),
                           _MenuCard(
-                            title: 'Novo Serviço',
-                            description: 'Adicione um serviço',
-                            icon: Icons.add_circle_outline_rounded,
+                            title: 'Relatórios',
+                            description: 'Acompanhe seus ganhos',
+                            icon: Icons.bar_chart_rounded,
                             cor: const Color(0xFF4CAF50),
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const MeusServicosScreen(),
+                                builder: (_) =>
+                                    const RelatoriosProfissionalScreen(),
                               ),
                             ),
                           ),

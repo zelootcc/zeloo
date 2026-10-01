@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'shell_cliente.dart';
 import 'home_profissional_screen.dart';
 import 'firebase_options.dart';
+import 'notificacoes_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,7 @@ class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   Future<String> _tipoConta(User user) async {
+    await NotificacoesService.inicializar();
     final cliente = await FirebaseFirestore.instance
         .collection('Clientes')
         .doc(user.uid)
@@ -392,12 +394,7 @@ class _HomePageState extends State<HomePage>
               ],
             ),
           ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 60,
-            child: _BannerDestaque(),
-          ),
+          Positioned(left: 16, right: 16, bottom: 60, child: _BannerDestaque()),
         ],
       ),
       bottomNavigationBar: Container(
@@ -489,10 +486,7 @@ class _BannerHero extends StatelessWidget {
             ),
             child: TextField(
               controller: searchCtrl,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF1A1A2E),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A2E)),
               decoration: InputDecoration(
                 hintText: 'Buscar serviços...',
                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
@@ -675,11 +669,7 @@ class _CardItemState extends State<_CardItem> {
                   color: widget.card.cor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  widget.card.icon,
-                  color: widget.card.cor,
-                  size: 28,
-                ),
+                child: Icon(widget.card.icon, color: widget.card.cor, size: 28),
               ),
               const Spacer(),
               Text(

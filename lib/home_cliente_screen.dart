@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'botao_notificacoes.dart';
 import 'firebase_service.dart';
 import 'lista_profissionais_real.dart';
 import 'perfil_screen.dart';
@@ -48,52 +49,65 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                     bottomRight: Radius.circular(36),
                   ),
                 ),
-                child: Column(
+                child: Stack(
                   children: [
-                    Image.asset('assets/imagens/logominimal.png', height: 80),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Olá, ${nome(d)}!',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      'Tudo que você precisa em um só lugar.',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                    const SizedBox(height: 18),
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ListaProfissionaisRealScreen(),
+                    Column(
+                      children: [
+                        Image.asset(
+                          'assets/imagens/logominimal.png',
+                          height: 80,
                         ),
-                      ),
-                      child: Container(
-                        height: 46,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Olá, ${nome(d)}!',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.search_rounded,
-                              color: Color(0xFF0077B6),
+                        const SizedBox(height: 5),
+                        const Text(
+                          'Tudo que você precisa em um só lugar.',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                        const SizedBox(height: 18),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const ListaProfissionaisRealScreen(),
                             ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Buscar profissionais...',
-                              style: TextStyle(color: Colors.grey),
+                          ),
+                          child: Container(
+                            height: 46,
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                          ],
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.search_rounded,
+                                  color: Color(0xFF0077B6),
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Buscar profissionais...',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
+                    const Positioned(
+                      top: 0,
+                      right: 0,
+                      child: BotaoNotificacoes(),
                     ),
                   ],
                 ),
