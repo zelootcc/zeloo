@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'Login.dart';
 import 'lista_profissionais_real.dart';
+import 'dados_profissionais.dart';
 
 class CategoriasScreen extends StatefulWidget {
   final bool showBottomNavigation;
@@ -33,6 +34,10 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
     _Categoria('Pintor', Icons.format_paint, const Color(0xFFAB47BC)),
     _Categoria('Jardineiro', Icons.yard, const Color(0xFF4CAF50)),
     _Categoria('Marceneiro', Icons.chair, const Color(0xFF795548)),
+    ...areasAtuacao.where((area) => !const [
+      'Eletricista', 'Encanador', 'Limpeza', 'Mecânico',
+      'Serviços Gerais', 'Pintor', 'Jardineiro', 'Marceneiro',
+    ].contains(area)).map((area) => _Categoria(area, Icons.work_outline, const Color(0xFF0077B6))),
   ];
 
   final TextEditingController _searchController = TextEditingController();
@@ -413,6 +418,8 @@ class _CategoriaCardState extends State<_CategoriaCard> {
 
               Text(
                 widget.categoria.label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,

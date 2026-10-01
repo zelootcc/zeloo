@@ -19,6 +19,24 @@ Perfis e configurações acompanham alterações do Firestore em tempo real.
 As categorias de navegação continuam sendo opções fixas da interface; a lista de
 profissionais de cada categoria já consulta o Firestore.
 
+## Áreas e horários do profissional
+
+Cadastro e edição usam o catálogo de `lib/dados_profissionais.dart`, com até três
+áreas em `areasAtuacao`. Os campos antigos `area` e `especialidade` mantêm a primeira
+seleção para compatibilidade. A busca considera todas as áreas selecionadas.
+
+`horariosAtendimento` contém apenas os dias escolhidos, com as chaves `segunda`,
+`terca`, `quarta`, `quinta`, `sexta`, `sabado`, `domingo`. Cada dia contém `inicio`
+e `fim` no formato `HH:mm`. `disponibilidade` mantém um resumo legível.
+O horário padrão preenche os dias; alterações individuais não são sobrescritas
+ao mudar o padrão. Sem dias selecionados, o atendimento fica sob consulta.
+Os intervalos terminam no mesmo dia e o término deve ser posterior ao início.
+
+Perfis antigos continuam legíveis. As opções antigas com intervalo explícito
+(segunda a sexta/sábado, 8h–18h) são convertidas ao abrir a edição. Outros textos
+antigos não permitem inferir horários: o profissional deve selecionar seus dias.
+As regras existentes já permitem salvar esses campos; não é necessário novo deploy.
+
 ## Configurações privadas
 
 O documento é criado na primeira gravação. Não requer preenchimento manual nem

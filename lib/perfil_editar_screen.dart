@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'zeloo_ui.dart';
+import 'telefone_formatter.dart';
 import 'firebase_service.dart';
 
 class PerfilEditarScreen extends StatefulWidget {
@@ -59,6 +61,10 @@ class _PerfilEditarScreenState extends State<PerfilEditarScreen> {
     final emailRegex = RegExp(r'^\S+@\S+\.\S+$');
     if (!emailRegex.hasMatch(_emailCtrl.text)) {
       _mostrarErro('Informe um e-mail válido.');
+      return;
+    }
+    if (!TelefoneFormatter.valido(_telefoneCtrl.text)) {
+      _mostrarErro('Informe o telefone com DDD e 10 ou 11 dígitos.');
       return;
     }
     setState(() => _loading = true);
@@ -278,6 +284,7 @@ class _Campo extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: tipo,
+      inputFormatters: tipo == TextInputType.phone ? const [TelefoneFormatter()] : null,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
@@ -314,7 +321,7 @@ class _BotaoSalvar extends StatelessWidget {
         width: double.infinity,
         height: 52,
         decoration: BoxDecoration(
-          color: Colors.black,
+          gradient: zelooGradiente,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Center(

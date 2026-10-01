@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'zeloo_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_service.dart';
 
@@ -216,7 +217,7 @@ class _PerfilNotificacoesScreenState extends State<PerfilNotificacoesScreen>
             width: double.infinity,
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.black,
+              gradient: zelooGradiente,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
