@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'Login.dart';
+import 'barra_navegacao.dart';
 import 'lista_profissionais_real.dart';
 import 'dados_profissionais.dart';
 
@@ -307,47 +308,18 @@ void _mostrarAlertaConta(BuildContext context) {
       ),
 
       bottomNavigationBar: widget.showBottomNavigation
-          ? Container(
-        decoration: const BoxDecoration(
-          gradient: _gradient,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _NavBtn(
-                  icon: Icons.home_rounded,
-                  label: 'Início',
-                  selected: false,
-                  onTap: () => Navigator.pop(context),
-                ),
-                _NavBtn(
-                  icon: Icons.grid_view_rounded,
-                  label: 'Categorias',
-                  selected: true,
-                  onTap: () {},
-                ),
-                _NavBtn(
-                  icon: Icons.person_rounded,
-                  label: 'Perfil',
-                  selected: false,
-                  onTap: () => _mostrarAlertaConta(context),
-                ),
+          ? BarraNavegacaoZeloo(
+              indice: 1,
+              itens: const [
+                ItemNavegacaoZeloo(icon: Icons.home_rounded, label: 'Início'),
+                ItemNavegacaoZeloo(icon: Icons.grid_view_rounded, label: 'Categorias'),
+                ItemNavegacaoZeloo(icon: Icons.person_rounded, label: 'Perfil'),
               ],
-            ),
-          ),
-        ),
-      )
+              onTap: (indice) {
+                if (indice == 0) Navigator.pop(context);
+                if (indice == 2) _mostrarAlertaConta(context);
+              },
+            )
           : null,
     );
   }
@@ -449,42 +421,6 @@ class _CategoriaCardState extends State<_CategoriaCard> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _NavBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _NavBtn({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: selected ? Colors.white : Colors.white60, size: 26),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              color: selected ? Colors.white : Colors.white60,
-              fontSize: 11,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }
