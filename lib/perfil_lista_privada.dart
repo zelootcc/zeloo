@@ -55,13 +55,11 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF4F7FB),
-    appBar: AppBar(
-      title: Text(widget.cartoes ? 'Formas de pagamento' : 'Meus endereços'),
-      foregroundColor: Colors.white,
-      backgroundColor: const Color(0xFF0077B6),
-      elevation: 0,
-      flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: zelooGradiente)),
-      titleTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+    appBar: AppBarZeloo(
+      titulo: widget.cartoes ? 'Formas de pagamento' : 'Meus endereços',
+      subtitulo: widget.cartoes
+          ? 'Organize como prefere receber e pagar'
+          : 'Mantenha seus locais favoritos por perto',
     ),
     body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: _stream,

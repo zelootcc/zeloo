@@ -7,6 +7,7 @@ import 'relatorios_profissional_screen.dart';
 import 'meus_servicos_screen.dart';
 import 'pedidos_profissional_screen.dart';
 import 'perfil_profissional_screen.dart';
+import 'formatadores.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -167,7 +168,7 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                         children: [
                           _ResumoCard(
                             label: 'Avaliação',
-                            valor: avaliacao.toString(),
+                            valor: formatarAvaliacao(avaliacao),
                             icon: Icons.star_rounded,
                             cor: const Color(0xFFFFC107),
                           ),

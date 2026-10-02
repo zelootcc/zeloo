@@ -1,12 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'notificacoes_service.dart';
 
-const _notificacaoGradient = LinearGradient(
-  colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-);
+import 'notificacao_navegacao.dart';
+import 'notificacoes_service.dart';
+import 'zeloo_ui.dart';
 
 class NotificacoesScreen extends StatelessWidget {
   const NotificacoesScreen({super.key});
@@ -20,16 +17,57 @@ class NotificacoesScreen extends StatelessWidget {
     return 'Há ${diferenca.inDays} d';
   }
 
+  ({IconData icon, Color color}) _aparencia(String tipo) {
+    switch (tipo) {
+      case 'novo_pedido':
+        return (icon: Icons.receipt_long_rounded, color: zelooAzul);
+      case 'pedido_aceito':
+        return (icon: Icons.thumb_up_alt_rounded, color: zelooTurquesa);
+      case 'profissional_a_caminho':
+        return (icon: Icons.directions_car_filled_rounded, color: zelooAzul);
+      case 'profissional_chegou':
+        return (
+          icon: Icons.location_on_rounded,
+          color: const Color(0xFF7B61FF),
+        );
+      case 'servico_iniciado':
+        return (icon: Icons.handyman_rounded, color: const Color(0xFFFF8A3D));
+      case 'confirmar_conclusao':
+      case 'servico_concluido':
+        return (icon: Icons.verified_rounded, color: const Color(0xFF20A76B));
+      case 'pedido_cancelado':
+        return (icon: Icons.cancel_rounded, color: const Color(0xFFE55353));
+      case 'codigo_renovado':
+        return (icon: Icons.pin_rounded, color: const Color(0xFF7B61FF));
+      case 'nova_avaliacao':
+        return (icon: Icons.star_rounded, color: const Color(0xFFFFB020));
+      default:
+        return (icon: Icons.notifications_rounded, color: zelooAzul);
+    }
+  }
+
+  Future<void> _abrir(
+    BuildContext context,
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final dados = doc.data();
+    if (dados['lida'] != true) {
+      try {
+        await NotificacoesService.marcarComoLida(doc.id);
+      } catch (_) {
+        // A tela relacionada ainda abre se a confirmação de leitura falhar.
+      }
+    }
+    if (!context.mounted) return;
+    await NotificacaoNavegacao.abrir(dados);
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF4F7FB),
-    appBar: AppBar(
-      title: const Text('Notificações'),
-      foregroundColor: Colors.white,
-      backgroundColor: const Color(0xFF0077B6),
-      flexibleSpace: const DecoratedBox(
-        decoration: BoxDecoration(gradient: _notificacaoGradient),
-      ),
+    appBar: const AppBarZeloo(
+      titulo: 'Notificações',
+      subtitulo: 'Acompanhe pedidos e novidades do seu perfil',
     ),
     body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: NotificacoesService.minhas(),
@@ -39,8 +77,9 @@ class NotificacoesScreen extends StatelessWidget {
             child: Text('Não foi possível carregar as notificações.'),
           );
         }
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         final notificacoes = [...snapshot.data!.docs]
           ..sort((a, b) {
             final criadoA = a.data()['criadoEm'];
@@ -81,36 +120,21 @@ class NotificacoesScreen extends StatelessWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(20),
           itemCount: notificacoes.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
             final doc = notificacoes[index];
             final dados = doc.data();
             final lida = dados['lida'] == true;
+            final aparencia = _aparencia(dados['tipo']?.toString() ?? '');
             return Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(22),
               child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: lida
-                    ? null
-                    : () => NotificacoesService.marcarComoLida(doc.id),
+                borderRadius: BorderRadius.circular(22),
+                onTap: () => _abrir(context, doc),
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: lida
-                          ? const Color(0xFFE5EDF3)
-                          : const Color(0xFF9EE4EB),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
+                  decoration: painelZeloo(destaque: !lida),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -118,13 +142,10 @@ class NotificacoesScreen extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          gradient: _notificacaoGradient,
+                          color: aparencia.color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(
-                          Icons.receipt_long_rounded,
-                          color: Colors.white,
-                        ),
+                        child: Icon(aparencia.icon, color: aparencia.color),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -172,6 +193,15 @@ class NotificacoesScreen extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 11),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFF9AAAB8),
+                          size: 22,
                         ),
                       ),
                     ],

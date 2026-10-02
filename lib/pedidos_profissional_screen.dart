@@ -7,7 +7,9 @@ import 'pedido_status.dart';
 import 'zeloo_ui.dart';
 
 class PedidosProfissionalScreen extends StatefulWidget {
-  const PedidosProfissionalScreen({super.key});
+  final String? pedidoDestacadoId;
+
+  const PedidosProfissionalScreen({super.key, this.pedidoDestacadoId});
 
   @override
   State<PedidosProfissionalScreen> createState() =>
@@ -47,6 +49,12 @@ class _PedidosProfissionalScreenState extends State<PedidosProfissionalScreen> {
               dataA?.millisecondsSinceEpoch ?? 0,
             );
           });
+        if (widget.pedidoDestacadoId != null) {
+          final indice = pedidos.indexWhere(
+            (pedido) => pedido.id == widget.pedidoDestacadoId,
+          );
+          if (indice > 0) pedidos.insert(0, pedidos.removeAt(indice));
+        }
         final filtrados = pedidos.where((doc) {
           final status =
               doc.data()['status']?.toString() ?? PedidoStatus.aguardando;

@@ -3,6 +3,7 @@ import 'agendamento_screen.dart';
 import 'firebase_service.dart';
 import 'profissional_model.dart';
 import 'dados_profissionais.dart';
+import 'formatadores.dart';
 
 class ListaProfissionaisRealScreen extends StatefulWidget {
   final String? filtroEspecialidade;
@@ -264,7 +265,7 @@ class _CardProfissional extends StatelessWidget {
                   Text(
                     profissional.totalAvaliacoes == 0
                         ? 'Novo'
-                        : profissional.avaliacao.toStringAsFixed(1),
+                        : formatarAvaliacao(profissional.avaliacao),
                   ),
                 ],
               ),

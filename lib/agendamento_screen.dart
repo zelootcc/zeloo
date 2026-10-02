@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'firebase_service.dart';
+import 'formatadores.dart';
 import 'profissional_model.dart';
+import 'zeloo_ui.dart';
 
 class AgendamentoScreen extends StatefulWidget {
   final ProfissionalModel profissional;
 
-  const AgendamentoScreen({
-    super.key,
-    required this.profissional,
-  });
+  const AgendamentoScreen({super.key, required this.profissional});
 
   @override
   State<AgendamentoScreen> createState() => _AgendamentoScreenState();
@@ -58,9 +57,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         _data == null ||
         _horario == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Preencha serviço, data e horário.'),
-        ),
+        const SnackBar(content: Text('Preencha serviço, data e horário.')),
       );
       return;
     }
@@ -71,9 +68,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       final valor = _servico!['preco'] is num
           ? (_servico!['preco'] as num).toDouble()
           : double.tryParse(
-                _servico!['preco']?.toString().replaceAll(',', '.') ?? '',
-              ) ??
-              0;
+                  _servico!['preco']?.toString().replaceAll(',', '.') ?? '',
+                ) ??
+                0;
 
       await FirebaseService.criarPedido(
         profissionalId: widget.profissional.id,
@@ -94,9 +91,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao enviar pedido: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao enviar pedido: $e')));
       }
     } finally {
       if (mounted) {
@@ -117,16 +114,10 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
             children: [
               Text(
                 titulo,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 2),
-              Text(
-                valor,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
+              Text(valor, style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -140,10 +131,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
-      appBar: AppBar(
-        title: const Text('Solicitar serviço'),
-        backgroundColor: const Color(0xFF0077B6),
-        foregroundColor: Colors.white,
+      appBar: const AppBarZeloo(
+        titulo: 'Solicitar serviço',
+        subtitulo: 'Escolha o serviço, a data e o horário',
       ),
       body: StreamBuilder(
         stream: FirebaseService.meusServicosDoProfissional(profissional.id),
@@ -166,7 +156,8 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              Card(
+              Container(
+                decoration: painelZeloo(),
                 child: Padding(
                   padding: const EdgeInsets.all(18),
                   child: Column(
@@ -174,9 +165,18 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                     children: [
                       Row(
                         children: [
-                          const CircleAvatar(
-                            radius: 28,
-                            child: Icon(Icons.person, size: 30),
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              gradient: zelooGradiente,
+                              borderRadius: BorderRadius.circular(19),
+                            ),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              color: Colors.white,
+                              size: 30,
+                            ),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -188,6 +188,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                                   style: const TextStyle(
                                     fontSize: 21,
                                     fontWeight: FontWeight.w800,
+                                    color: zelooTexto,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -211,8 +212,8 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                         'Avaliação',
                         profissional.totalAvaliacoes == 0
                             ? 'Ainda sem avaliações'
-                            : '${profissional.avaliacao.toStringAsFixed(1)} '
-                                '(${profissional.totalAvaliacoes} avaliações)',
+                            : '${formatarAvaliacao(profissional.avaliacao)} '
+                                  '(${profissional.totalAvaliacoes} avaliações)',
                         Icons.star_outline,
                       ),
                       const SizedBox(height: 14),
@@ -229,24 +230,28 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                       const SizedBox(height: 6),
                       Text(
                         profissional.descricao,
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          height: 1.4,
-                        ),
+                        style: TextStyle(color: Colors.grey[700], height: 1.4),
                       ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Escolha o serviço',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              const CabecalhoCampo(
+                icon: Icons.home_repair_service_rounded,
+                titulo: 'Escolha o serviço',
+                descricao: 'Selecione uma das opções oferecidas',
               ),
               const SizedBox(height: 10),
               if (servicos.isEmpty)
-                const Text(
-                  'Este profissional ainda não cadastrou serviços ativos.',
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: painelZeloo(),
+                  child: const Text(
+                    'Este profissional ainda não cadastrou serviços ativos.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF64788B)),
+                  ),
                 )
               else
                 ...servicos.map((doc) {
@@ -256,7 +261,9 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                       ? (dados['preco'] as num).toDouble()
                       : 0.0;
 
-                  return Card(
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: painelZeloo(destaque: selecionado),
                     child: RadioListTile<String>(
                       value: doc.id,
                       groupValue: _servicoId,
@@ -275,56 +282,50 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                         'R\$ ${preco.toStringAsFixed(2)}',
                       ),
                       selected: selecionado,
+                      fillColor: const WidgetStatePropertyAll(zelooTurquesa),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
                     ),
                   );
                 }),
               const SizedBox(height: 20),
-              const Text(
-                'Data',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _selecionarData,
-                icon: const Icon(Icons.calendar_today),
-                label: Text(
-                  _data == null ? 'Escolher data' : _formatarData(_data!),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Horário',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _selecionarHorario,
-                icon: const Icon(Icons.schedule),
-                label: Text(
-                  _horario == null
-                      ? 'Escolher horário'
-                      : _horario!.format(context),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: painelZeloo(),
+                child: Column(
+                  children: [
+                    const CabecalhoCampo(
+                      icon: Icons.event_available_rounded,
+                      titulo: 'Quando será?',
+                      descricao: 'Defina a data e o horário do atendimento',
+                    ),
+                    const SizedBox(height: 18),
+                    _botaoEscolha(
+                      icone: Icons.calendar_today_rounded,
+                      rotulo: 'Data',
+                      valor: _data == null
+                          ? 'Escolher data'
+                          : _formatarData(_data!),
+                      onTap: _selecionarData,
+                    ),
+                    const SizedBox(height: 12),
+                    _botaoEscolha(
+                      icone: Icons.schedule_rounded,
+                      rotulo: 'Horário',
+                      valor: _horario == null
+                          ? 'Escolher horário'
+                          : _horario!.format(context),
+                      onTap: _selecionarHorario,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 28),
-              SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _enviarPedido,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0077B6),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: _loading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Enviar pedido',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                ),
+              BotaoZeloo(
+                texto: _loading ? 'Enviando...' : 'Enviar pedido',
+                icon: Icons.send_rounded,
+                onPressed: _loading ? null : _enviarPedido,
               ),
             ],
           );
@@ -332,4 +333,51 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       ),
     );
   }
+
+  Widget _botaoEscolha({
+    required IconData icone,
+    required String rotulo,
+    required String valor,
+    required VoidCallback onTap,
+  }) => Material(
+    color: const Color(0xFFF4F8FC),
+    borderRadius: BorderRadius.circular(16),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        child: Row(
+          children: [
+            Icon(icone, color: zelooAzul, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rotulo,
+                    style: const TextStyle(
+                      color: Color(0xFF718496),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    valor,
+                    style: const TextStyle(
+                      color: zelooTexto,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF9AAAB8)),
+          ],
+        ),
+      ),
+    ),
+  );
 }

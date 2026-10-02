@@ -17,13 +17,9 @@ class RelatoriosProfissionalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF4F7FB),
-    appBar: AppBar(
-      title: const Text('Relatórios'),
-      foregroundColor: Colors.white,
-      backgroundColor: zelooAzul,
-      flexibleSpace: const DecoratedBox(
-        decoration: BoxDecoration(gradient: zelooGradiente),
-      ),
+    appBar: const AppBarZeloo(
+      titulo: 'Relatórios',
+      subtitulo: 'Acompanhe seus serviços e ganhos',
     ),
     body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseService.meusPedidosProfissional(),

@@ -10,6 +10,61 @@ const zelooGradiente = LinearGradient(
   end: Alignment.bottomRight,
 );
 
+class AppBarZeloo extends StatelessWidget implements PreferredSizeWidget {
+  final String titulo;
+  final String? subtitulo;
+
+  const AppBarZeloo({super.key, required this.titulo, this.subtitulo});
+
+  @override
+  Size get preferredSize => Size.fromHeight(subtitulo == null ? 72 : 88);
+
+  @override
+  Widget build(BuildContext context) => AppBar(
+    toolbarHeight: preferredSize.height,
+    foregroundColor: Colors.white,
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    leading: IconButton(
+      icon: const Icon(Icons.chevron_left_rounded, size: 30),
+      onPressed: () => Navigator.maybePop(context),
+    ),
+    titleSpacing: 4,
+    title: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          titulo,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        if (subtitulo != null) ...[
+          const SizedBox(height: 3),
+          Text(
+            subtitulo!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ],
+    ),
+    flexibleSpace: Container(
+      decoration: const BoxDecoration(
+        gradient: zelooGradiente,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+    ),
+  );
+}
+
 BoxDecoration painelZeloo({bool destaque = false}) => BoxDecoration(
   color: Colors.white,
   borderRadius: BorderRadius.circular(22),

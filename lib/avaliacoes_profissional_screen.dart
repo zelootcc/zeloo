@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_service.dart';
+import 'formatadores.dart';
 import 'zeloo_ui.dart';
 
 class AvaliacoesProfissionalScreen extends StatelessWidget {
@@ -10,13 +11,9 @@ class AvaliacoesProfissionalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF4F7FB),
-    appBar: AppBar(
-      title: const Text('Minhas avaliações'),
-      foregroundColor: Colors.white,
-      backgroundColor: zelooAzul,
-      flexibleSpace: const DecoratedBox(
-        decoration: BoxDecoration(gradient: zelooGradiente),
-      ),
+    appBar: const AppBarZeloo(
+      titulo: 'Minhas avaliações',
+      subtitulo: 'Veja o que os clientes acharam dos seus serviços',
     ),
     body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseService.minhasAvaliacoesProfissional(),
@@ -92,7 +89,7 @@ class AvaliacoesProfissionalScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        media.toStringAsFixed(1),
+                        formatarAvaliacao(media),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,

@@ -5,11 +5,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import 'notificacao_navegacao.dart';
+
 class NotificacoesService {
   static final _messaging = FirebaseMessaging.instance;
   static final _db = FirebaseFirestore.instance;
   static StreamSubscription<String>? _tokenSubscription;
   static StreamSubscription<RemoteMessage>? _messageSubscription;
+  static StreamSubscription<RemoteMessage>? _openedSubscription;
+  static bool _mensagemInicialVerificada = false;
 
   static Future<void> inicializar() async {
     if (kIsWeb ||
@@ -20,6 +24,22 @@ class NotificacoesService {
     final usuario = FirebaseAuth.instance.currentUser;
     if (usuario == null) return;
     try {
+      await _openedSubscription?.cancel();
+      _openedSubscription = FirebaseMessaging.onMessageOpenedApp.listen(
+        _abrirMensagem,
+      );
+
+      if (!_mensagemInicialVerificada) {
+        _mensagemInicialVerificada = true;
+        final mensagemInicial = await _messaging.getInitialMessage();
+        if (mensagemInicial != null) {
+          Future<void>.delayed(
+            const Duration(milliseconds: 500),
+            () => _abrirMensagem(mensagemInicial),
+          );
+        }
+      }
+
       final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
@@ -44,6 +64,18 @@ class NotificacoesService {
     } catch (_) {
       // A central funciona mesmo sem permissão de push ou sem APNs configurado.
     }
+  }
+
+  static Future<void> _abrirMensagem(RemoteMessage mensagem) async {
+    final notificacaoId = mensagem.data['notificacaoId']?.toString();
+    if (notificacaoId != null && notificacaoId.isNotEmpty) {
+      try {
+        await marcarComoLida(notificacaoId);
+      } catch (_) {
+        // A navegação continua mesmo se a confirmação de leitura falhar.
+      }
+    }
+    await NotificacaoNavegacao.abrir(mensagem.data);
   }
 
   static Future<void> registrarToken(String token, String uid) {

@@ -11,6 +11,7 @@ import 'shell_cliente.dart';
 import 'home_profissional_screen.dart';
 import 'firebase_options.dart';
 import 'notificacoes_service.dart';
+import 'notificacao_navegacao.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,8 @@ void main() async {
     ),
   );
   runApp(
-    const MaterialApp(
+    MaterialApp(
+      navigatorKey: navegadorZeloo,
       debugShowCheckedModeBanner: false,
 
       localizationsDelegates: [

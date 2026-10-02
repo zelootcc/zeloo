@@ -9,8 +9,9 @@ import 'zeloo_ui.dart';
 
 class PedidosScreen extends StatefulWidget {
   final VoidCallback? onVoltar;
+  final String? pedidoDestacadoId;
 
-  const PedidosScreen({super.key, this.onVoltar});
+  const PedidosScreen({super.key, this.onVoltar, this.pedidoDestacadoId});
 
   @override
   State<PedidosScreen> createState() => _PedidosScreenState();
@@ -49,6 +50,12 @@ class _PedidosScreenState extends State<PedidosScreen> {
               dataA?.millisecondsSinceEpoch ?? 0,
             );
           });
+        if (widget.pedidoDestacadoId != null) {
+          final indice = pedidos.indexWhere(
+            (pedido) => pedido.id == widget.pedidoDestacadoId,
+          );
+          if (indice > 0) pedidos.insert(0, pedidos.removeAt(indice));
+        }
         final filtrados = pedidos.where((doc) {
           final status =
               doc.data()['status']?.toString() ?? PedidoStatus.aguardando;
