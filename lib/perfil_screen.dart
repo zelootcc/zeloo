@@ -167,19 +167,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
           );
         },
       ),
-      bottomNavigationBar: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: DecoratedBox(
-          decoration: const BoxDecoration(gradient: _gradientPrincipal),
-          child: const Center(
-            child: Text(
-              'Zeloo © 2026',
-              style: TextStyle(color: Colors.white70, fontSize: 12),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -391,3 +378,4 @@ Widget _BotaoSair(BuildContext context) {
     ),
   );
 }
+
