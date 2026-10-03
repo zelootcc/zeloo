@@ -6,6 +6,7 @@ import 'botao_voltar.dart';
 import 'firebase_service.dart';
 import 'pedido_status.dart';
 import 'zeloo_ui.dart';
+import 'local_pedido_resumo.dart';
 
 class PedidosScreen extends StatefulWidget {
   final VoidCallback? onVoltar;
@@ -416,6 +417,7 @@ class _CardPedidoClienteState extends State<_CardPedidoCliente> {
               ],
             ),
           ),
+          LocalPedidoResumo(dados: dados),
           if (status != PedidoStatus.cancelado) ProgressoPedido(status: status),
           if (PedidoStatus.codigoVisivelParaCliente(status))
             _CodigoDoPedido(

@@ -4,6 +4,7 @@ import 'firebase_service.dart';
 import 'formatadores.dart';
 import 'profissional_model.dart';
 import 'zeloo_ui.dart';
+import 'local_pedido_campo.dart';
 
 class AgendamentoScreen extends StatefulWidget {
   final ProfissionalModel profissional;
@@ -20,6 +21,8 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
   DateTime? _data;
   TimeOfDay? _horario;
   bool _loading = false;
+  Map<String, dynamic>? _local;
+  late final _servicos = FirebaseService.meusServicosDoProfissional(widget.profissional.id);
 
   Future<void> _selecionarData() async {
     final data = await showDatePicker(
@@ -62,6 +65,13 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       return;
     }
 
+    if ((_local?['logradouro']?.toString().trim().length ?? 0) < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Informe o endereço completo do atendimento.')),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
 
     try {
@@ -81,6 +91,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         data: _formatarData(_data!),
         horario: _horario!.format(context),
         descricao: _servico!['descricao']?.toString() ?? '',
+        localAtendimento: _local!,
       );
 
       if (!mounted) return;
@@ -136,7 +147,7 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
         subtitulo: 'Escolha o serviço, a data e o horário',
       ),
       body: StreamBuilder(
-        stream: FirebaseService.meusServicosDoProfissional(profissional.id),
+        stream: _servicos,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -320,6 +331,11 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 28),
+              LocalPedidoCampo(
+                habilitado: !_loading,
+                onChanged: (local) => _local = local,
               ),
               const SizedBox(height: 28),
               BotaoZeloo(

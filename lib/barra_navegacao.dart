@@ -15,14 +15,18 @@ class BarraNavegacaoZeloo extends StatelessWidget {
   final int indice;
   final List<ItemNavegacaoZeloo> itens;
   final ValueChanged<int> onTap;
+  final int? indiceCentral;
 
   const BarraNavegacaoZeloo({
     super.key,
     required this.indice,
     required this.itens,
     required this.onTap,
+    this.indiceCentral,
   }) : assert(itens.length >= 2),
-       assert(indice >= 0 && indice < itens.length);
+       assert(indice >= 0 && indice < itens.length),
+       assert(indiceCentral == null ||
+           (indiceCentral > 0 && indiceCentral < itens.length - 1));
 
   @override
   Widget build(BuildContext context) {
@@ -41,19 +45,39 @@ class BarraNavegacaoZeloo extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final larguraItem = constraints.maxWidth / itens.length;
+          final larguraLateral = (constraints.maxWidth - larguraItem) / 2;
+          final larguras = List.generate(itens.length, (i) {
+            if (indiceCentral == null || i == indiceCentral) return larguraItem;
+            return i < indiceCentral!
+                ? larguraLateral / indiceCentral!
+                : larguraLateral / (itens.length - indiceCentral! - 1);
+          });
+          double esquerda = 0;
+          final centros = larguras.map((largura) {
+            final centro = esquerda + largura / 2;
+            esquerda += largura;
+            return centro;
+          }).toList();
           return TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: indice.toDouble(), end: indice.toDouble()),
             duration: duracao,
             curve: Curves.easeInOutCubic,
             builder: (context, posicao, _) {
+              final anterior = posicao.floor().clamp(0, itens.length - 1);
+              final seguinte = posicao.ceil().clamp(0, itens.length - 1);
+              final progresso = posicao - anterior;
+              final centro = centros[anterior] +
+                  (centros[seguinte] - centros[anterior]) * progresso;
+              final largura = larguras[anterior] +
+                  (larguras[seguinte] - larguras[anterior]) * progresso;
               return Stack(
                 children: [
                   Positioned.fill(
                     child: IgnorePointer(
                       child: CustomPaint(
                         painter: _FundoBarra(
-                          centro: (posicao + 0.5) * larguraItem,
-                          meiaLargura: math.min(46.0, larguraItem / 2),
+                          centro: centro,
+                          meiaLargura: math.min(46.0, largura / 2),
                         ),
                       ),
                     ),
@@ -69,7 +93,8 @@ class BarraNavegacaoZeloo extends StatelessWidget {
                         final selecionado = i == indice;
                         final destaque = (1 - (posicao - i).abs())
                             .clamp(0.0, 1.0).toDouble();
-                        return Expanded(
+                        return SizedBox(
+                          width: larguras[i],
                           child: Semantics(
                             button: true,
                             selected: selecionado,

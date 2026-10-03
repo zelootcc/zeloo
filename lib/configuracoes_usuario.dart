@@ -1,3 +1,5 @@
+import 'local_atendimento.dart';
+
 /// Aplica uma alteração à versão mais recente da lista dentro da transação.
 List<Map<String, dynamic>> atualizarListaPrivada(
   List<dynamic> atual, {
@@ -28,6 +30,28 @@ List<Map<String, dynamic>> atualizarListaPrivada(
     if (campo == 'cartoes' &&
         !RegExp(r'^\d{4}$').hasMatch(dados['ultimos4'] as String)) {
       throw ArgumentError('Informe somente os quatro últimos dígitos.');
+    }
+    // Metadados opcionais mantêm compatibilidade com os cartões antigos.
+    if (campo == 'cartoes') {
+      for (final chave in ['titular', 'validade']) {
+        final valor = adicionar[chave];
+        if (valor != null) {
+          if (valor is! String || valor.trim().isEmpty || valor.length > 80) {
+            throw ArgumentError('Dados do cartão inválidos.');
+          }
+          dados[chave] = valor.trim();
+        }
+      }
+      if (adicionar['demonstracao'] == true) dados['demonstracao'] = true;
+    }
+    if (campo == 'enderecos') {
+      final local = dadosLocalAtendimento(adicionar);
+      // Mantém os endereços antigos com os mesmos campos.
+      if (adicionar.containsKey('complemento')) dados['complemento'] = local['complemento'];
+      if (local.containsKey('latitude')) {
+        dados['latitude'] = local['latitude'];
+        dados['longitude'] = local['longitude'];
+      }
     }
     itens.add({...dados, 'id': novoId, 'principal': itens.isEmpty});
   }

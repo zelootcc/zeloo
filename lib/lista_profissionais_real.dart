@@ -4,6 +4,8 @@ import 'firebase_service.dart';
 import 'profissional_model.dart';
 import 'dados_profissionais.dart';
 import 'formatadores.dart';
+import 'botao_voltar.dart';
+import 'zeloo_ui.dart';
 
 class ListaProfissionaisRealScreen extends StatefulWidget {
   final String? filtroEspecialidade;
@@ -18,6 +20,7 @@ class ListaProfissionaisRealScreen extends StatefulWidget {
 class _ListaProfissionaisRealScreenState
     extends State<ListaProfissionaisRealScreen> {
   final busca = TextEditingController();
+  late final _profissionais = FirebaseService.profissionais();
   String query = '';
   late String filtro;
 
@@ -34,7 +37,8 @@ class _ListaProfissionaisRealScreenState
   }
 
   void _atualizarBusca() {
-    setState(() => query = busca.text.toLowerCase().trim());
+    final novaBusca = busca.text.toLowerCase().trim();
+    if (novaBusca != query) setState(() => query = novaBusca);
   }
 
   @override
@@ -49,7 +53,7 @@ class _ListaProfissionaisRealScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
       body: StreamBuilder(
-        stream: FirebaseService.profissionais(),
+        stream: _profissionais,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -89,34 +93,42 @@ class _ListaProfissionaisRealScreenState
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 190,
+                expandedHeight: 140,
                 pinned: true,
-                backgroundColor: const Color(0xFF0077B6),
-
-                leading: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(context),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                automaticallyImplyLeading: false,
+                leading: const Align(
+                  alignment: Alignment.topLeft,
+                  child: BotaoVoltar(),
                 ),
-
                 flexibleSpace: FlexibleSpaceBar(
-                  title: const Text(
-                    'Profissionais',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
                   background: Container(
                     decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
+                      gradient: zelooGradiente,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
                       ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 56, 24, 20),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Profissionais',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Encontre quem pode ajudar você',
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
                     ),
                   ),
                 ),

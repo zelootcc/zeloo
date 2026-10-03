@@ -5,8 +5,42 @@ import 'notificacao_navegacao.dart';
 import 'notificacoes_service.dart';
 import 'zeloo_ui.dart';
 
-class NotificacoesScreen extends StatelessWidget {
+class NotificacoesScreen extends StatefulWidget {
   const NotificacoesScreen({super.key});
+
+  @override
+  State<NotificacoesScreen> createState() => _NotificacoesScreenState();
+}
+
+class _NotificacoesScreenState extends State<NotificacoesScreen> {
+  late final _notificacoes = NotificacoesService.minhas();
+  bool _excluindo = false;
+
+  Future<void> _apagar({String? id}) async {
+    if (_excluindo) return;
+    setState(() => _excluindo = true);
+    try {
+      final String mensagem;
+      if (id != null) {
+        await NotificacoesService.apagarLida(id);
+        mensagem = 'Notificação apagada.';
+      } else {
+        final quantidade = await NotificacoesService.apagarTodasLidas();
+        mensagem = quantidade == 0
+            ? 'Não há notificações lidas para apagar.'
+            : '$quantidade notificaç${quantidade == 1 ? 'ão apagada' : 'ões apagadas'}.';
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível concluir a exclusão. Tente novamente.')),
+      );
+    } finally {
+      if (mounted) setState(() => _excluindo = false);
+    }
+  }
 
   String _tempo(Timestamp? timestamp) {
     if (timestamp == null) return 'Agora';
@@ -70,7 +104,7 @@ class NotificacoesScreen extends StatelessWidget {
       subtitulo: 'Acompanhe pedidos e novidades do seu perfil',
     ),
     body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: NotificacoesService.minhas(),
+      stream: _notificacoes,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(
@@ -117,99 +151,138 @@ class NotificacoesScreen extends StatelessWidget {
             ),
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.all(20),
-          itemCount: notificacoes.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final doc = notificacoes[index];
-            final dados = doc.data();
-            final lida = dados['lida'] == true;
-            final aparencia = _aparencia(dados['tipo']?.toString() ?? '');
-            return Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(22),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(22),
-                onTap: () => _abrir(context, doc),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: painelZeloo(destaque: !lida),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: aparencia.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(aparencia.icon, color: aparencia.color),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text('Sua central',
+                      style: TextStyle(color: zelooTexto, fontWeight: FontWeight.w800)),
+                  ),
+                  TextButton.icon(
+                    onPressed: _excluindo ? null : () => _apagar(),
+                    icon: _excluindo
+                        ? const SizedBox(width: 16, height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.delete_sweep_rounded, size: 20),
+                    label: Text(_excluindo ? 'Apagando...' : 'Apagar lidas'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: zelooAzul,
+                      backgroundColor: zelooSuave,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                itemCount: notificacoes.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final doc = notificacoes[index];
+                  final dados = doc.data();
+                  final lida = dados['lida'] == true;
+                  final aparencia = _aparencia(dados['tipo']?.toString() ?? '');
+                  return Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(22),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(22),
+                      onTap: () => _abrir(context, doc),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: painelZeloo(destaque: !lida),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    dados['titulo']?.toString() ??
-                                        'Nova notificação',
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: aparencia.color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(aparencia.icon, color: aparencia.color),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          dados['titulo']?.toString() ??
+                                              'Nova notificação',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF1A1A2E),
+                                          ),
+                                        ),
+                                      ),
+                                      if (!lida)
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF00B4C8),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    dados['mensagem']?.toString() ?? '',
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF1A1A2E),
+                                      color: Color(0xFF64788B),
+                                      height: 1.35,
                                     ),
                                   ),
-                                ),
-                                if (!lida)
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF00B4C8),
-                                      shape: BoxShape.circle,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _tempo((dados['criadoEm'] as Timestamp?)),
+                                    style: const TextStyle(
+                                      color: Color(0xFF8DA0B0),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 11),
+                                  child: Icon(Icons.chevron_right_rounded,
+                                    color: Color(0xFF9AAAB8), size: 22),
+                                ),
+                                if (lida)
+                                  IconButton(
+                                    tooltip: 'Apagar notificação lida',
+                                    onPressed: _excluindo ? null : () => _apagar(id: doc.id),
+                                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                                    color: zelooAzul,
                                   ),
                               ],
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              dados['mensagem']?.toString() ?? '',
-                              style: const TextStyle(
-                                color: Color(0xFF64788B),
-                                height: 1.35,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _tempo((dados['criadoEm'] as Timestamp?)),
-                              style: const TextStyle(
-                                color: Color(0xFF8DA0B0),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 11),
-                        child: Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF9AAAB8),
-                          size: 22,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     ),

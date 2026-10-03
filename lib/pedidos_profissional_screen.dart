@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'firebase_service.dart';
 import 'pedido_status.dart';
 import 'zeloo_ui.dart';
+import 'local_pedido_resumo.dart';
 
 class PedidosProfissionalScreen extends StatefulWidget {
   final String? pedidoDestacadoId;
@@ -641,6 +642,7 @@ class _CardPedidoProfissionalState extends State<_CardPedidoProfissional> {
               ],
             ),
           ),
+          LocalPedidoResumo(dados: dados),
           if (status != PedidoStatus.cancelado) ProgressoPedido(status: status),
           if (status != PedidoStatus.concluido &&
               status != PedidoStatus.cancelado)

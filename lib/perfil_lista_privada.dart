@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'firebase_service.dart';
 import 'zeloo_ui.dart';
+import 'adicionar_cartao_sheet.dart';
+import 'localizacao_service.dart';
 
 /// Lista privada do usuário, com gravações confirmadas antes de fechar o editor.
 class PerfilListaPrivada extends StatefulWidget {
@@ -48,7 +50,9 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
       backgroundColor: Colors.white,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (_) => _EditorItem(cartoes: widget.cartoes),
+      builder: (_) => widget.cartoes
+          ? const AdicionarCartaoSheet()
+          : const _EditorItem(cartoes: false),
     );
   }
 
@@ -89,9 +93,9 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
               const Padding(
                 padding: EdgeInsets.only(bottom: 16),
                 child: Text(
-                  'Salve a identificação dos seus cartões. '
+                  'Cadastro demonstrativo para o TCC. Use dados fictícios. '
                   'O pagamento é combinado com o profissional; '
-                  'não são realizadas cobranças pelo aplicativo.',
+                  'o aplicativo não realiza cobranças.',
                 ),
               ),
             if (_salvando) const LinearProgressIndicator(),
@@ -138,6 +142,7 @@ class _PerfilListaPrivadaState extends State<PerfilListaPrivada> {
                         subtitle: Text(
                           widget.cartoes
                               ? '•••• ${item['ultimos4'] ?? ''}'
+                                  '${item['validade'] == null ? '' : ' • ${item['validade']}'}'
                               : '${item['logradouro'] ?? ''}',
                         ),
                         trailing: IconButton(
@@ -190,6 +195,11 @@ class _EditorItem extends StatefulWidget {
 class _EditorItemState extends State<_EditorItem> {
   final _titulo = TextEditingController();
   final _detalhe = TextEditingController();
+  final _complemento = TextEditingController();
+  Map<String, dynamic> _coordenadas = {};
+  bool _localizando = false;
+  bool _enderecoGpsPendente = false;
+  String? _avisoLocal;
   final _form = GlobalKey<FormState>();
   bool _salvando = false;
   String? _erro;
@@ -198,11 +208,12 @@ class _EditorItemState extends State<_EditorItem> {
   void dispose() {
     _titulo.dispose();
     _detalhe.dispose();
+    _complemento.dispose();
     super.dispose();
   }
 
   Future<void> _salvar() async {
-    if (_salvando || !_form.currentState!.validate()) return;
+    if (_salvando || _localizando || !_form.currentState!.validate()) return;
     setState(() {
       _salvando = true;
       _erro = null;
@@ -218,6 +229,8 @@ class _EditorItemState extends State<_EditorItem> {
             : {
                 'apelido': _titulo.text.trim(),
                 'logradouro': _detalhe.text.trim(),
+                'complemento': _complemento.text.trim(),
+                ..._coordenadas,
               },
       );
       if (mounted) Navigator.pop(context);
@@ -226,6 +239,29 @@ class _EditorItemState extends State<_EditorItem> {
         setState(() => _erro = 'Não foi possível salvar. Tente novamente.');
     } finally {
       if (mounted) setState(() => _salvando = false);
+    }
+  }
+
+  Future<void> _usarLocalizacao() async {
+    setState(() { _localizando = true; _avisoLocal = null; });
+    try {
+      final local = await LocalizacaoService.atual();
+      if (!mounted) return;
+      setState(() {
+        _detalhe.text = local['logradouro'] as String;
+        _enderecoGpsPendente = _detalhe.text.isEmpty;
+        _coordenadas = {'latitude': local['latitude'], 'longitude': local['longitude']};
+        _avisoLocal = _detalhe.text.isEmpty
+            ? 'Localização obtida. Preencha o endereço e o número.'
+            : 'Confira o endereço e o número antes de salvar.';
+      });
+    } catch (erro) {
+      if (mounted) {
+        setState(() => _avisoLocal = erro is ErroLocalizacao
+            ? erro.mensagem : 'Não foi possível obter a localização. Digite o endereço.');
+      }
+    } finally {
+      if (mounted) setState(() => _localizando = false);
     }
   }
 
@@ -251,9 +287,21 @@ class _EditorItemState extends State<_EditorItem> {
               descricao: widget.cartoes ? 'Uma identificação para facilitar sua organização.' : 'Dê um nome a esse lugar e informe o endereço.',
             ),
             const SizedBox(height: 24),
+            if (!widget.cartoes) ...[
+              OutlinedButton.icon(
+                onPressed: _salvando || _localizando ? null : _usarLocalizacao,
+                icon: const Icon(Icons.my_location_rounded, size: 20),
+                label: Text(_localizando ? 'Obtendo localização...' : 'Usar minha localização atual'),
+                style: OutlinedButton.styleFrom(foregroundColor: zelooAzul,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+              ),
+              if (_avisoLocal != null) Padding(padding: const EdgeInsets.only(top: 8),
+                child: Text(_avisoLocal!, style: const TextStyle(color: zelooAzul, fontSize: 12))),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               controller: _titulo,
-              enabled: !_salvando,
+              enabled: !_salvando && !_localizando,
               maxLength: 80,
               decoration: campoZeloo(widget.cartoes ? 'Bandeira' : 'Apelido', icon: widget.cartoes ? Icons.credit_card : Icons.home_outlined),
               validator: (value) => value == null || value.trim().isEmpty
@@ -263,7 +311,10 @@ class _EditorItemState extends State<_EditorItem> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _detalhe,
-              enabled: !_salvando,
+              enabled: !_salvando && !_localizando,
+              onChanged: (_) {
+                if (!_enderecoGpsPendente) _coordenadas = {};
+              },
               maxLength: widget.cartoes ? 4 : 300,
               keyboardType: widget.cartoes
                   ? TextInputType.number
@@ -282,11 +333,18 @@ class _EditorItemState extends State<_EditorItem> {
                 return null;
               },
             ),
+            if (!widget.cartoes) ...[
+              const SizedBox(height: 8),
+              TextFormField(controller: _complemento,
+                enabled: !_salvando && !_localizando,
+                maxLength: 150,
+                decoration: campoZeloo('Complemento ou referência (opcional)', icon: Icons.door_front_door_outlined)),
+            ],
             if (_erro != null)
               Text(_erro!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 16),
             BotaoZeloo(
-              onPressed: _salvando ? null : _salvar,
+              onPressed: _salvando || _localizando ? null : _salvar,
               texto: _salvando ? 'Salvando...' : 'Salvar',
             ),
           ],

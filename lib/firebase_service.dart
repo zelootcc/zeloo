@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'configuracoes_usuario.dart';
 import 'pedido_status.dart';
+import 'local_atendimento.dart';
 
 class FirebaseService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -196,8 +197,10 @@ class FirebaseService {
     required double valor,
     required String data,
     required String horario,
+    required Map<String, dynamic> localAtendimento,
     String descricao = '',
   }) async {
+    final local = dadosLocalAtendimento(localAtendimento);
     final clienteId = uid;
 
     final cliente = await _db.collection('Clientes').doc(clienteId).get();
@@ -246,6 +249,7 @@ class FirebaseService {
       'data': data,
       'horario': horario,
       'descricao': descricao,
+      'localAtendimento': local,
       'status': PedidoStatus.aguardando,
       'tentativasCodigo': 0,
       'codigoValidado': false,

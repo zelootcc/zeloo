@@ -15,35 +15,36 @@ class ProfissionalShell extends StatefulWidget {
 }
 
 class _ProfissionalShellState extends State<ProfissionalShell> {
-  int _indice = 0;
+  int _indice = 2;
 
   void _selecionar(int indice) => setState(() => _indice = indice);
-  void _voltarAoInicio() => _selecionar(0);
+  void _voltarAoInicio() => _selecionar(2);
 
   late final List<Widget> _telas = [
-    HomeProfissionalScreen(mostrarRodape: false, onNavegar: _selecionar),
     MeusServicosScreen(onVoltar: _voltarAoInicio),
     PedidosProfissionalScreen(onVoltar: _voltarAoInicio),
+    HomeProfissionalScreen(mostrarRodape: false, onNavegar: _selecionar),
     RelatoriosProfissionalScreen(onVoltar: _voltarAoInicio),
     PerfilProfissionalScreen(mostrarRodape: false, onVoltar: _voltarAoInicio),
   ];
 
   @override
   Widget build(BuildContext context) => PopScope(
-    canPop: _indice == 0,
+    canPop: _indice == 2,
     onPopInvokedWithResult: (didPop, result) {
-      if (!didPop && _indice != 0) _voltarAoInicio();
+      if (!didPop && _indice != 2) _voltarAoInicio();
     },
     child: Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
       body: IndexedStack(index: _indice, children: _telas),
       bottomNavigationBar: BarraNavegacaoZeloo(
         indice: _indice,
+        indiceCentral: 2,
         onTap: _selecionar,
         itens: const [
-          ItemNavegacaoZeloo(icon: Icons.home_rounded, label: 'Início'),
           ItemNavegacaoZeloo(icon: Icons.assignment_rounded, label: 'Serviços'),
           ItemNavegacaoZeloo(icon: Icons.receipt_long_rounded, label: 'Pedidos'),
+          ItemNavegacaoZeloo(icon: Icons.home_rounded, label: 'Início'),
           ItemNavegacaoZeloo(icon: Icons.bar_chart_rounded, label: 'Relatórios'),
           ItemNavegacaoZeloo(icon: Icons.person_rounded, label: 'Perfil'),
         ],

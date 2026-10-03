@@ -241,7 +241,7 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             icon: Icons.assignment_rounded,
                             cor: const Color(0xFF00B4D8),
                             onTap: widget.onNavegar != null
-                                ? () => widget.onNavegar!(1)
+                                ? () => widget.onNavegar!(0)
                                 : () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -255,7 +255,7 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             icon: Icons.receipt_long_rounded,
                             cor: const Color(0xFFFF6B35),
                             onTap: widget.onNavegar != null
-                                ? () => widget.onNavegar!(2)
+                                ? () => widget.onNavegar!(1)
                                 : () => Navigator.push(
                               context,
                               MaterialPageRoute(

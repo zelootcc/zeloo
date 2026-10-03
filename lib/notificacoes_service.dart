@@ -98,4 +98,38 @@ class NotificacoesService {
   static Future<void> marcarComoLida(String id) {
     return _db.collection('Notificacoes').doc(id).update({'lida': true});
   }
+
+  static Future<void> apagarLida(String id) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw StateError('Entre novamente para apagar notificações.');
+    final ref = _db.collection('Notificacoes').doc(id);
+    await _db.runTransaction((transaction) async {
+      final documento = await transaction.get(ref);
+      if (!documento.exists) return;
+      final dados = documento.data()!;
+      if (dados['destinatarioId'] != uid || dados['lida'] != true) {
+        throw StateError('Só é possível apagar suas notificações já lidas.');
+      }
+      transaction.delete(ref);
+    });
+  }
+
+  static Future<int> apagarTodasLidas() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw StateError('Entre novamente para apagar notificações.');
+
+    // Busca também as notificações antigas, além das 50 exibidas na central.
+    final resultado = await _db.collection('Notificacoes')
+        .where('destinatarioId', isEqualTo: uid).get();
+    final lidas = resultado.docs.where((doc) => doc.data()['lida'] == true).toList();
+    // Divide a limpeza em lotes para respeitar o limite de operações do Firebase.
+    for (var inicio = 0; inicio < lidas.length; inicio += 400) {
+      final lote = _db.batch();
+      for (final doc in lidas.skip(inicio).take(400)) {
+        lote.delete(doc.reference);
+      }
+      await lote.commit();
+    }
+    return lidas.length;
+  }
 }
