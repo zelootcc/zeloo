@@ -9,7 +9,9 @@ const _gradient = LinearGradient(
 );
 
 class MeusServicosScreen extends StatefulWidget {
-  const MeusServicosScreen({super.key});
+  final VoidCallback? onVoltar;
+
+  const MeusServicosScreen({super.key, this.onVoltar});
 
   @override
   State<MeusServicosScreen> createState() => _MeusServicosScreenState();
@@ -211,7 +213,7 @@ class _MeusServicosScreenState extends State<MeusServicosScreen> {
                     color: Colors.white,
                     size: 28,
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: widget.onVoltar ?? () => Navigator.pop(context),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(

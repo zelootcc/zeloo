@@ -28,7 +28,7 @@ class BarraNavegacaoZeloo extends StatelessWidget {
   Widget build(BuildContext context) {
     final duracao = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
-        : const Duration(milliseconds: 700);
+        : const Duration(milliseconds: 300);
     final rodape = MediaQuery.paddingOf(context).bottom;
     final alturaTexto = math.max(
       16.0,

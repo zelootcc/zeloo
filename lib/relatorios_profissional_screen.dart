@@ -9,7 +9,9 @@ import 'relatorio_ganhos.dart';
 import 'zeloo_ui.dart';
 
 class RelatoriosProfissionalScreen extends StatelessWidget {
-  const RelatoriosProfissionalScreen({super.key});
+  final VoidCallback? onVoltar;
+
+  const RelatoriosProfissionalScreen({super.key, this.onVoltar});
 
   String _dinheiro(double valor) =>
       'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}';
@@ -17,9 +19,10 @@ class RelatoriosProfissionalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF4F7FB),
-    appBar: const AppBarZeloo(
+    appBar: AppBarZeloo(
       titulo: 'Relatórios',
       subtitulo: 'Acompanhe seus serviços e ganhos',
+      onVoltar: onVoltar,
     ),
     body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseService.meusPedidosProfissional(),

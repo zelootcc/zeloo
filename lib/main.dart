@@ -8,7 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'shell_cliente.dart';
-import 'home_profissional_screen.dart';
+import 'shell_profissional.dart';
 import 'firebase_options.dart';
 import 'notificacoes_service.dart';
 import 'notificacao_navegacao.dart';
@@ -89,7 +89,7 @@ class AuthGate extends StatelessWidget {
             }
 
             if (tipoSnapshot.data == 'profissional') {
-              return const HomeProfissionalScreen();
+              return const ProfissionalShell();
             }
 
             if (tipoSnapshot.data == 'cliente') {

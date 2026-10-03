@@ -8,8 +8,9 @@ import 'zeloo_ui.dart';
 
 class PedidosProfissionalScreen extends StatefulWidget {
   final String? pedidoDestacadoId;
+  final VoidCallback? onVoltar;
 
-  const PedidosProfissionalScreen({super.key, this.pedidoDestacadoId});
+  const PedidosProfissionalScreen({super.key, this.pedidoDestacadoId, this.onVoltar});
 
   @override
   State<PedidosProfissionalScreen> createState() =>
@@ -74,7 +75,7 @@ class _PedidosProfissionalScreenState extends State<PedidosProfissionalScreen> {
                   color: Colors.white,
                   size: 28,
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: widget.onVoltar ?? () => Navigator.pop(context),
               ),
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(

@@ -13,8 +13,9 @@ const zelooGradiente = LinearGradient(
 class AppBarZeloo extends StatelessWidget implements PreferredSizeWidget {
   final String titulo;
   final String? subtitulo;
+  final VoidCallback? onVoltar;
 
-  const AppBarZeloo({super.key, required this.titulo, this.subtitulo});
+  const AppBarZeloo({super.key, required this.titulo, this.subtitulo, this.onVoltar});
 
   @override
   Size get preferredSize => Size.fromHeight(subtitulo == null ? 72 : 88);
@@ -27,7 +28,7 @@ class AppBarZeloo extends StatelessWidget implements PreferredSizeWidget {
     elevation: 0,
     leading: IconButton(
       icon: const Icon(Icons.chevron_left_rounded, size: 30),
-      onPressed: () => Navigator.maybePop(context),
+      onPressed: onVoltar ?? () => Navigator.maybePop(context),
     ),
     titleSpacing: 4,
     title: Column(

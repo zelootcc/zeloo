@@ -16,7 +16,14 @@ const _gradient = LinearGradient(
 );
 
 class HomeProfissionalScreen extends StatefulWidget {
-  const HomeProfissionalScreen({super.key});
+  final bool mostrarRodape;
+  final ValueChanged<int>? onNavegar;
+
+  const HomeProfissionalScreen({
+    super.key,
+    this.mostrarRodape = true,
+    this.onNavegar,
+  });
 
   @override
   State<HomeProfissionalScreen> createState() => _HomeProfissionalScreenState();
@@ -218,7 +225,9 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             description: 'Edite seu perfil profissional',
                             icon: Icons.person_rounded,
                             cor: const Color(0xFF0077B6),
-                            onTap: () => Navigator.push(
+                            onTap: widget.onNavegar != null
+                                ? () => widget.onNavegar!(4)
+                                : () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
@@ -231,7 +240,9 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             description: 'Gerencie seus serviços',
                             icon: Icons.assignment_rounded,
                             cor: const Color(0xFF00B4D8),
-                            onTap: () => Navigator.push(
+                            onTap: widget.onNavegar != null
+                                ? () => widget.onNavegar!(1)
+                                : () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const MeusServicosScreen(),
@@ -243,7 +254,9 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             description: 'Veja solicitações recebidas',
                             icon: Icons.receipt_long_rounded,
                             cor: const Color(0xFFFF6B35),
-                            onTap: () => Navigator.push(
+                            onTap: widget.onNavegar != null
+                                ? () => widget.onNavegar!(2)
+                                : () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
@@ -256,7 +269,9 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             description: 'Acompanhe seus ganhos',
                             icon: Icons.bar_chart_rounded,
                             cor: const Color(0xFF4CAF50),
-                            onTap: () => Navigator.push(
+                            onTap: widget.onNavegar != null
+                                ? () => widget.onNavegar!(3)
+                                : () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
@@ -273,7 +288,7 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
               ],
             ),
           ),
-          bottomNavigationBar: Container(
+          bottomNavigationBar: !widget.mostrarRodape ? null : Container(
             height: 52,
             decoration: const BoxDecoration(gradient: _gradient),
             child: const Center(

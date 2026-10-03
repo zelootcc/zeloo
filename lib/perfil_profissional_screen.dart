@@ -18,7 +18,14 @@ const _gradient = LinearGradient(
 );
 
 class PerfilProfissionalScreen extends StatefulWidget {
-  const PerfilProfissionalScreen({super.key});
+  final bool mostrarRodape;
+  final VoidCallback? onVoltar;
+
+  const PerfilProfissionalScreen({
+    super.key,
+    this.mostrarRodape = true,
+    this.onVoltar,
+  });
 
   @override
   State<PerfilProfissionalScreen> createState() =>
@@ -115,6 +122,7 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
             child: Column(
               children: [
                 ComBotaoVoltar(
+                  onVoltar: widget.onVoltar,
                   child: _HeaderPerfil(
                     nome: nome,
                     especialidade: especialidade,
@@ -291,7 +299,7 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
           );
         },
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: !widget.mostrarRodape ? null : Container(
         height: 52,
         decoration: const BoxDecoration(gradient: _gradient),
         child: const Center(
