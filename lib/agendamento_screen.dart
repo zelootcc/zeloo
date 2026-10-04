@@ -5,6 +5,7 @@ import 'formatadores.dart';
 import 'profissional_model.dart';
 import 'zeloo_ui.dart';
 import 'local_pedido_campo.dart';
+import 'local_atendimento.dart';
 
 class AgendamentoScreen extends StatefulWidget {
   final ProfissionalModel profissional;
@@ -65,9 +66,11 @@ class _AgendamentoScreenState extends State<AgendamentoScreen> {
       return;
     }
 
-    if ((_local?['logradouro']?.toString().trim().length ?? 0) < 5) {
+    try {
+      dadosLocalAtendimento(_local ?? {'rua': ''});
+    } on ArgumentError catch (erro) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe o endereço completo do atendimento.')),
+        SnackBar(content: Text(erro.message.toString())),
       );
       return;
     }

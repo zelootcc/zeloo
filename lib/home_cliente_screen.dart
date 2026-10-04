@@ -4,6 +4,8 @@ import 'firebase_service.dart';
 import 'lista_profissionais_real.dart';
 import 'perfil_screen.dart';
 import 'pedidos_screen.dart';
+import 'localizacao_inicio.dart';
+import 'perfil_enderecos_screen.dart';
 
 const _gradientPrincipal = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -19,6 +21,7 @@ class HomeClienteScreen extends StatefulWidget {
 
 class _HomeClienteScreenState extends State<HomeClienteScreen> {
   late final _perfil = FirebaseService.observarUsuario();
+  late final _enderecos = FirebaseService.configuracoes();
   String nome(Map<String, dynamic> d) =>
       d['nome']?.toString().split(' ').first ?? 'Cliente';
   @override
@@ -99,6 +102,26 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                                   style: TextStyle(color: Colors.grey),
                                 ),
                               ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        StreamBuilder(
+                          stream: _enderecos,
+                          builder: (context, snapshot) => LocalizacaoCliente(
+                            enderecos: ((snapshot.data?.data()?['enderecos'] as List?) ?? [])
+                                .whereType<Map>()
+                                .map((item) => Map<String, dynamic>.from(item))
+                                .toList(),
+                            carregandoEnderecos: snapshot.connectionState == ConnectionState.waiting,
+                            erroEnderecos: snapshot.hasError,
+                            selecionarEndereco: (id) => FirebaseService.alterarItemPrivado(
+                              'enderecos',
+                              principal: id,
+                            ),
+                            gerenciarEnderecos: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PerfilEnderecosScreen()),
                             ),
                           ),
                         ),

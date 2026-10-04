@@ -11,6 +11,7 @@ import 'shell_profissional.dart';
 import 'firebase_options.dart';
 import 'notificacoes_service.dart';
 import 'notificacao_navegacao.dart';
+import 'localizacao_inicio.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -514,6 +515,12 @@ class _BannerHero extends StatelessWidget {
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
+          ),
+          const SizedBox(height: 14),
+          CartaoLocalizacao(
+            local: 'Jardim Satélite • São José dos Campos',
+            bloqueado: true,
+            onTap: () => mostrarAlertaConta(context),
           ),
         ],
       ),

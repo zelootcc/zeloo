@@ -18,7 +18,7 @@ List<Map<String, dynamic>> atualizarListaPrivada(
   if (adicionar != null) {
     final campos = campo == 'cartoes'
         ? ['bandeira', 'ultimos4']
-        : ['apelido', 'logradouro'];
+        : adicionar.containsKey('rua') ? ['apelido'] : ['apelido', 'logradouro'];
     final dados = <String, dynamic>{};
     for (final chave in campos) {
       final valor = adicionar[chave];
@@ -46,6 +46,7 @@ List<Map<String, dynamic>> atualizarListaPrivada(
     }
     if (campo == 'enderecos') {
       final local = dadosLocalAtendimento(adicionar);
+      if (adicionar.containsKey('rua')) dados.addAll(local);
       // Mantém os endereços antigos com os mesmos campos.
       if (adicionar.containsKey('complemento')) dados['complemento'] = local['complemento'];
       if (local.containsKey('latitude')) {

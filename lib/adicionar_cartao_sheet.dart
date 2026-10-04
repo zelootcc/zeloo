@@ -83,100 +83,7 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
             const CabecalhoCampo(
               icon: Icons.credit_card_rounded,
               titulo: 'Adicionar cartão',
-              descricao: 'Preencha os dados do cartão de demonstração.',
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: zelooGradiente,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.credit_card_rounded,
-                        color: Colors.white,
-                      ),
-                      const Spacer(),
-                      Text(
-                        _bandeira,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    digitosCartao(_numero.text).length < 4
-                        ? '••••  ••••  ••••  ••••'
-                        : '••••  ••••  ••••  ${digitosCartao(_numero.text).substring(digitosCartao(_numero.text).length - 4)}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _titular.text.trim().isEmpty
-                              ? 'NOME DO TITULAR'
-                              : _titular.text.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _validade.text.isEmpty ? 'MM/AA' : _validade.text,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: zelooSuave,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline_rounded, color: zelooAzul, size: 20),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Modo TCC: use dados fictícios. Não há cobranças. '
-                      'O número completo e o CVV não são salvos.',
-                      style: TextStyle(
-                        color: zelooAzul,
-                        fontSize: 12,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              descricao: 'Preencha os dados do cartão.',
             ),
             const SizedBox(height: 18),
             DropdownButtonFormField<String>(
@@ -223,7 +130,6 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
                 'Número do cartão',
                 icon: Icons.credit_card_rounded,
               ).copyWith(hintText: '0000 0000 0000 0000'),
-              onChanged: (_) => setState(() {}),
               validator: (valor) => numeroCartaoValido(valor ?? '')
                   ? null
                   : 'Informe um número de cartão válido.',
@@ -240,7 +146,6 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
                 'Nome do titular',
                 icon: Icons.person_outline_rounded,
               ).copyWith(counterText: '', hintText: 'Como aparece no cartão'),
-              onChanged: (_) => setState(() {}),
               validator: (valor) => (valor ?? '').trim().length >= 3
                   ? null
                   : 'Informe o nome do titular.',
@@ -262,8 +167,7 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
                     decoration: campoZeloo(
                       'Validade',
                     ).copyWith(hintText: 'MM/AA', errorMaxLines: 2),
-                    onChanged: (_) => setState(() {}),
-                    validator: (valor) => validadeCartaoValida(valor ?? '')
+                          validator: (valor) => validadeCartaoValida(valor ?? '')
                         ? null
                         : 'Validade inválida ou vencida.',
                   ),
@@ -317,9 +221,7 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
             BotaoZeloo(
               onPressed: _salvando ? null : _salvar,
               icon: Icons.check_rounded,
-              texto: _salvando
-                  ? 'Salvando...'
-                  : 'Salvar cartão de demonstração',
+              texto: _salvando ? 'Salvando...' : 'Salvar cartão',
             ),
           ],
         ),

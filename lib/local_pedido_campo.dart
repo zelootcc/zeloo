@@ -4,6 +4,7 @@ import 'firebase_service.dart';
 import 'localizacao_service.dart';
 import 'perfil_enderecos_screen.dart';
 import 'zeloo_ui.dart';
+import 'endereco_campos.dart';
 
 class LocalPedidoCampo extends StatefulWidget {
   final bool habilitado;
@@ -20,9 +21,7 @@ class LocalPedidoCampo extends StatefulWidget {
 
 class _LocalPedidoCampoState extends State<LocalPedidoCampo> {
   late final _enderecos = FirebaseService.configuracoes();
-  final _endereco = TextEditingController();
-  final _complemento = TextEditingController();
-  Map<String, dynamic> _coordenadas = {};
+  final _endereco = EnderecoController();
   bool _localizando = false;
   bool _enderecoGpsPendente = false;
   String? _aviso;
@@ -30,15 +29,10 @@ class _LocalPedidoCampoState extends State<LocalPedidoCampo> {
   @override
   void dispose() {
     _endereco.dispose();
-    _complemento.dispose();
     super.dispose();
   }
 
-  void _informar() => widget.onChanged({
-    'logradouro': _endereco.text.trim(),
-    'complemento': _complemento.text.trim(),
-    ..._coordenadas,
-  });
+  void _informar() => widget.onChanged(_endereco.dados);
 
   Future<void> _usarLocalizacao() async {
     setState(() {
@@ -49,16 +43,10 @@ class _LocalPedidoCampoState extends State<LocalPedidoCampo> {
       final local = await LocalizacaoService.atual();
       if (!mounted) return;
       setState(() {
-        _endereco.text = local['logradouro'] as String;
-        _enderecoGpsPendente = _endereco.text.isEmpty;
-        _complemento.clear();
-        _coordenadas = {
-          'latitude': local['latitude'],
-          'longitude': local['longitude'],
-        };
-        _aviso = _endereco.text.isEmpty
-            ? 'Localização obtida. Digite o endereço e o número para confirmar.'
-            : 'Confira o endereço e o número. O GPS pode indicar um local próximo.';
+        _endereco.preencher(local);
+        _enderecoGpsPendente = _endereco.campos['rua']!.text.isEmpty;
+        _aviso =
+            'Confira os campos preenchidos pelo GPS e complete os que faltarem.';
       });
       _informar();
     } catch (erro) {
@@ -75,16 +63,11 @@ class _LocalPedidoCampoState extends State<LocalPedidoCampo> {
 
   void _selecionar(Map<String, dynamic> local) {
     setState(() {
-      _endereco.text = local['logradouro']?.toString() ?? '';
+      _endereco.preencher(local);
       _enderecoGpsPendente = false;
-      _complemento.text = local['complemento']?.toString() ?? '';
-      _coordenadas = {
-        if (local['latitude'] is num && local['longitude'] is num) ...{
-          'latitude': local['latitude'],
-          'longitude': local['longitude'],
-        },
-      };
-      _aviso = '${local['apelido'] ?? 'Endereço'} selecionado.';
+      _aviso = local.containsKey('rua')
+          ? '${local['apelido'] ?? 'Endereço'} selecionado.'
+          : 'Endereço antigo: confira a rua e complete os campos separados.';
     });
     _informar();
   }
@@ -185,39 +168,16 @@ class _LocalPedidoCampoState extends State<LocalPedidoCampo> {
           },
         ),
         const SizedBox(height: 8),
-        TextField(
+        EnderecoCampos(
           controller: _endereco,
-          enabled: widget.habilitado && !_localizando,
-          maxLength: 300,
-          keyboardType: TextInputType.streetAddress,
-          textInputAction: TextInputAction.next,
-          decoration: campoZeloo(
-            'Endereço completo',
-            icon: Icons.location_on_outlined,
-          ).copyWith(hintText: 'Rua, número, bairro e cidade', counterText: ''),
-          onChanged: (_) {
-            // Se o endereço for alterado, o ponto anterior deixa de representá-lo.
-            setState(() {
-              if (!_enderecoGpsPendente) _coordenadas = {};
-              _aviso = null;
-            });
+          habilitado: widget.habilitado && !_localizando,
+          onChanged: (campo) {
+            if (!_enderecoGpsPendente &&
+                ['rua', 'bairro', 'cidade', 'estado'].contains(campo)) {
+              _endereco.coordenadas = {};
+            }
             _informar();
           },
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _complemento,
-          enabled: widget.habilitado && !_localizando,
-          maxLength: 150,
-          decoration:
-              campoZeloo(
-                'Complemento ou referência (opcional)',
-                icon: Icons.door_front_door_outlined,
-              ).copyWith(
-                hintText: 'Apartamento, portão, ponto de referência',
-                counterText: '',
-              ),
-          onChanged: (_) => _informar(),
         ),
         if (_aviso != null)
           Padding(
