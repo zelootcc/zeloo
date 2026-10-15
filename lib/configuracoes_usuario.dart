@@ -17,7 +17,7 @@ List<Map<String, dynamic>> atualizarListaPrivada(
       .toList();
   if (adicionar != null) {
     final campos = campo == 'cartoes'
-        ? ['bandeira', 'ultimos4']
+        ? <String>[]
         : adicionar.containsKey('rua') ? ['apelido'] : ['apelido', 'logradouro'];
     final dados = <String, dynamic>{};
     for (final chave in campos) {
@@ -27,19 +27,17 @@ List<Map<String, dynamic>> atualizarListaPrivada(
       }
       dados[chave] = valor.trim();
     }
-    if (campo == 'cartoes' &&
-        !RegExp(r'^\d{4}$').hasMatch(dados['ultimos4'] as String)) {
-      throw ArgumentError('Informe somente os quatro últimos dígitos.');
-    }
     // Metadados opcionais mantêm compatibilidade com os cartões antigos.
     if (campo == 'cartoes') {
+      dados['bandeira'] = adicionar['bandeira']?.toString().trim() ?? 'Outra';
+      // Aceita dados de demonstração sem validar o cartão e guarda só o final.
+      final numero = (adicionar['ultimos4']?.toString() ?? '')
+          .replaceAll(RegExp(r'\D'), '');
+      dados['ultimos4'] = numero.substring((numero.length - 4).clamp(0, numero.length));
       for (final chave in ['titular', 'validade']) {
         final valor = adicionar[chave];
         if (valor != null) {
-          if (valor is! String || valor.trim().isEmpty || valor.length > 80) {
-            throw ArgumentError('Dados do cartão inválidos.');
-          }
-          dados[chave] = valor.trim();
+          dados[chave] = valor.toString().trim();
         }
       }
       if (adicionar['demonstracao'] == true) dados['demonstracao'] = true;

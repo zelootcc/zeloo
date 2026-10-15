@@ -87,16 +87,34 @@ void main() {
         unorderedEquals(['bandeira', 'ultimos4', 'id', 'principal']),
       );
       expect(
-        () => atualizarListaPrivada(
+        atualizarListaPrivada(
           [],
           campo: 'cartoes',
           novoId: 'novo',
           adicionar: {'bandeira': 'Visa', 'ultimos4': '4111111111111234'},
-        ),
-        throwsArgumentError,
+        ).single['ultimos4'],
+        '1234',
       );
     },
   );
+
+  test('cartão aceita dados incompletos e validade vencida sem bloquear', () {
+    for (final numero in ['', '12', '1111']) {
+      final resultado = atualizarListaPrivada(
+        [],
+        campo: 'cartoes',
+        novoId: 'demonstracao',
+        adicionar: {
+          'bandeira': 'Visa',
+          'ultimos4': numero,
+          'titular': '',
+          'validade': '01/20',
+        },
+      );
+      expect(resultado.single['ultimos4'], numero);
+      expect(resultado.single['validade'], '01/20');
+    }
+  });
 
   test('dados incompletos e listas desconhecidas não são aceitos', () {
     expect(

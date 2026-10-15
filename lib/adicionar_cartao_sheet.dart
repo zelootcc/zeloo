@@ -32,7 +32,7 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
   }
 
   Future<void> _salvar() async {
-    if (_salvando || !_form.currentState!.validate()) return;
+    if (_salvando) return;
     FocusScope.of(context).unfocus();
     setState(() {
       _salvando = true;
@@ -46,7 +46,7 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
         'cartoes',
         adicionar: {
           'bandeira': _bandeira,
-          'ultimos4': numero.substring(numero.length - 4),
+          'ultimos4': numero.substring((numero.length - 4).clamp(0, numero.length)),
           'titular': _titular.text.trim(),
           'validade': _validade.text,
           'demonstracao': true,
@@ -130,9 +130,6 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
                 'Número do cartão',
                 icon: Icons.credit_card_rounded,
               ).copyWith(hintText: '0000 0000 0000 0000'),
-              validator: (valor) => numeroCartaoValido(valor ?? '')
-                  ? null
-                  : 'Informe um número de cartão válido.',
             ),
             const SizedBox(height: 14),
             TextFormField(
@@ -146,9 +143,6 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
                 'Nome do titular',
                 icon: Icons.person_outline_rounded,
               ).copyWith(counterText: '', hintText: 'Como aparece no cartão'),
-              validator: (valor) => (valor ?? '').trim().length >= 3
-                  ? null
-                  : 'Informe o nome do titular.',
             ),
             const SizedBox(height: 14),
             Row(
@@ -167,9 +161,6 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
                     decoration: campoZeloo(
                       'Validade',
                     ).copyWith(hintText: 'MM/AA', errorMaxLines: 2),
-                          validator: (valor) => validadeCartaoValida(valor ?? '')
-                        ? null
-                        : 'Validade inválida ou vencida.',
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -203,10 +194,6 @@ class _AdicionarCartaoSheetState extends State<AdicionarCartaoSheet> {
                         ),
                       ),
                     ),
-                    validator: (valor) =>
-                        cvvCartaoValido(valor ?? '', _bandeira)
-                        ? null
-                        : 'CVV inválido.',
                     onFieldSubmitted: (_) => _salvar(),
                   ),
                 ),
