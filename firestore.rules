@@ -21,8 +21,14 @@ service cloud.firestore {
     }
 
     match /Profissionais/{uid} {
+      function mediaDentroDoLimite() {
+        let media = request.resource.data.get('avaliacao', 0);
+        return media is number && media >= 0 && media <= 5;
+      }
+
       allow read: if autenticado();
-      allow create, delete: if donoDoPerfil(uid);
+      allow create: if donoDoPerfil(uid) && mediaDentroDoLimite();
+      allow delete: if donoDoPerfil(uid);
 
       function atualizacaoDeAvaliacaoValida() {
         let pedidoId = request.resource.data.ultimaAvaliacaoPedidoId;
@@ -60,9 +66,9 @@ service cloud.firestore {
             .hasOnly(['pedidoEmAtendimento']);
       }
 
-      allow update: if donoDoPerfil(uid) ||
+      allow update: if mediaDentroDoLimite() && (donoDoPerfil(uid) ||
         (autenticado() && (liberacaoDeAtendimentoValida() ||
-          atualizacaoDeAvaliacaoValida()));
+          atualizacaoDeAvaliacaoValida())));
     }
 
     match /Servicos/{id} {
