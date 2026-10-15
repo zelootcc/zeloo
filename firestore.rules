@@ -47,8 +47,22 @@ service cloud.firestore {
           ]);
       }
 
+      function liberacaoDeAtendimentoValida() {
+        let pedidoId = resource.data.get('pedidoEmAtendimento', '');
+        let antes = get(/databases/$(database)/documents/Pedidos/$(pedidoId)).data;
+        let depois = getAfter(/databases/$(database)/documents/Pedidos/$(pedidoId)).data;
+        return pedidoId != '' && antes.clienteId == request.auth.uid &&
+          antes.profissionalId == uid &&
+          !(antes.status in ['concluido', 'cancelado']) &&
+          depois.status in ['concluido', 'cancelado'] &&
+          request.resource.data.pedidoEmAtendimento == '' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['pedidoEmAtendimento']);
+      }
+
       allow update: if donoDoPerfil(uid) ||
-        (autenticado() && atualizacaoDeAvaliacaoValida());
+        (autenticado() && (liberacaoDeAtendimentoValida() ||
+          atualizacaoDeAvaliacaoValida()));
     }
 
     match /Servicos/{id} {
@@ -61,7 +75,11 @@ service cloud.firestore {
 
     match /Pedidos/{id} {
       allow create: if autenticado() &&
-        request.resource.data.clienteId == request.auth.uid;
+        request.resource.data.clienteId == request.auth.uid &&
+        get(/databases/$(database)/documents/Profissionais/$(request.resource.data.profissionalId))
+          .data.get('disponivel', true) == true &&
+        get(/databases/$(database)/documents/Profissionais/$(request.resource.data.profissionalId))
+          .data.get('pedidoEmAtendimento', '') == '';
 
       allow read: if autenticado() &&
         (resource.data.clienteId == request.auth.uid ||
@@ -93,6 +111,10 @@ service cloud.firestore {
             (
               resource.data.status == 'aguardando' &&
               request.resource.data.status == 'aceito' &&
+              get(/databases/$(database)/documents/Profissionais/$(request.auth.uid))
+                .data.get('pedidoEmAtendimento', '') == '' &&
+              getAfter(/databases/$(database)/documents/Profissionais/$(request.auth.uid))
+                .data.pedidoEmAtendimento == id &&
               mudouSomente(['status', 'aceitoEm', 'atualizadoEm'])
             ) ||
             (

@@ -97,7 +97,7 @@ class AvaliacoesProfissionalScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${avaliacoes.length} avaliação${avaliacoes.length == 1 ? '' : 'ões'}',
+                        '${avaliacoes.length} ${avaliacoes.length == 1 ? 'avaliação' : 'avaliações'}',
                         style: const TextStyle(color: Colors.white),
                       ),
                     ],

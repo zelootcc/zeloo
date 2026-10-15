@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'configuracoes_usuario.dart';
 import 'pedido_status.dart';
 import 'local_atendimento.dart';
+import 'profissional_model.dart';
 
 class FirebaseService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -217,6 +218,11 @@ class FirebaseService {
     if (!profissional.exists) {
       throw Exception('Profissional não encontrado.');
     }
+    if (!ProfissionalModel.estaDisponivel(profissional.data()!)) {
+      throw Exception(
+        'Este profissional está ocupado ou indisponível no momento.',
+      );
+    }
 
     final servicoDoc = await _servicos.doc(servicoId).get();
 
@@ -326,31 +332,60 @@ class FirebaseService {
     required String mensagem,
   }) async {
     final pedidoRef = _pedido(id);
-    final pedido = await pedidoRef.get();
-    final dados = pedido.data();
-    if (dados == null) throw Exception('Pedido não encontrado.');
+    final notificacaoRef = _db.collection('Notificacoes').doc();
+    await _db.runTransaction((transaction) async {
+      final pedido = await transaction.get(pedidoRef);
+      final dados = pedido.data();
+      if (dados == null) throw Exception('Pedido não encontrado.');
 
-    final remetenteId = uid;
-    final destinatarioId = remetenteId == dados['clienteId']
-        ? dados['profissionalId']?.toString()
-        : dados['clienteId']?.toString();
-    if (destinatarioId == null || destinatarioId.isEmpty) {
-      throw Exception('Participante do pedido não encontrado.');
-    }
+      final remetenteId = uid;
+      final destinatarioId = remetenteId == dados['clienteId']
+          ? dados['profissionalId']?.toString()
+          : dados['clienteId']?.toString();
+      if (destinatarioId == null || destinatarioId.isEmpty) {
+        throw Exception('Participante do pedido não encontrado.');
+      }
 
-    final lote = _db.batch();
-    lote.update(pedidoRef, alteracoes);
-    lote.set(_db.collection('Notificacoes').doc(), {
-      'destinatarioId': destinatarioId,
-      'remetenteId': remetenteId,
-      'pedidoId': id,
-      'tipo': tipo,
-      'titulo': titulo,
-      'mensagem': mensagem,
-      'lida': false,
-      'criadoEm': FieldValue.serverTimestamp(),
+      final status = alteracoes['status'];
+      final aceita = status == PedidoStatus.aceito;
+      final encerra =
+          status == PedidoStatus.concluido || status == PedidoStatus.cancelado;
+      final profissionalRef = _db
+          .collection('Profissionais')
+          .doc(dados['profissionalId'].toString());
+      // Todas as leituras vêm antes das gravações da transação.
+      final profissional = aceita || encerra
+          ? await transaction.get(profissionalRef)
+          : null;
+      final dadosProfissional = profissional?.data();
+      if (aceita) {
+        if (remetenteId != dados['profissionalId'] ||
+            PedidoStatus.normalizar(dados['status']?.toString() ?? '') !=
+                PedidoStatus.aguardando) {
+          throw Exception('Este pedido não pode mais ser aceito.');
+        }
+        if (dadosProfissional == null ||
+            !ProfissionalModel.estaDisponivel(dadosProfissional)) {
+          throw Exception('Você já está ocupado ou indisponível no momento.');
+        }
+        transaction.update(profissionalRef, {'pedidoEmAtendimento': id});
+      } else if (encerra && dadosProfissional?['pedidoEmAtendimento'] == id) {
+        // Cancelar outro pedido pendente não libera o atendimento atual.
+        transaction.update(profissionalRef, {'pedidoEmAtendimento': ''});
+      }
+
+      transaction.update(pedidoRef, alteracoes);
+      transaction.set(notificacaoRef, {
+        'destinatarioId': destinatarioId,
+        'remetenteId': remetenteId,
+        'pedidoId': id,
+        'tipo': tipo,
+        'titulo': titulo,
+        'mensagem': mensagem,
+        'lida': false,
+        'criadoEm': FieldValue.serverTimestamp(),
+      });
     });
-    await lote.commit();
   }
 
   static Future<void> aceitarPedido(String id) {

@@ -8,6 +8,7 @@ import 'meus_servicos_screen.dart';
 import 'pedidos_profissional_screen.dart';
 import 'perfil_profissional_screen.dart';
 import 'formatadores.dart';
+import 'profissional_model.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -83,7 +84,8 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
             : lerAreas(dados).join(' • ');
         final avaliacao = _numero(dados, 'avaliacao');
         final preco = _numero(dados, 'precoHora');
-        final disponivel = dados['disponivel'] == true;
+        final ocupado = ProfissionalModel.estaOcupado(dados);
+        final disponivel = ProfissionalModel.estaDisponivel(dados);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF4F7FB),
@@ -145,7 +147,11 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  disponivel ? 'Disponível' : 'Indisponível',
+                                  ocupado
+                                      ? 'Ocupado'
+                                      : (disponivel
+                                            ? 'Disponível'
+                                            : 'Indisponível'),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,

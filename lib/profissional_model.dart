@@ -1,6 +1,20 @@
 import 'dados_profissionais.dart';
 
 class ProfissionalModel {
+  // A disponibilidade manual é preservada enquanto há um pedido em atendimento.
+  static bool estaOcupado(Map<String, dynamic> dados) =>
+      (dados['pedidoEmAtendimento']?.toString() ?? '').isNotEmpty;
+
+  static bool estaDisponivel(Map<String, dynamic> dados) {
+    final disponibilidade =
+        dados['disponibilidade']?.toString().toLowerCase() ?? '';
+    final manual = dados['disponivel'] is bool
+        ? dados['disponivel'] as bool
+        : !disponibilidade.contains('ocupado') &&
+              !disponibilidade.contains('indispon');
+    return manual && !estaOcupado(dados);
+  }
+
   final String id;
   final String nome;
   final String especialidade;
@@ -32,10 +46,7 @@ class ProfissionalModel {
     final valor = dados['precoHora'] ?? dados['valorHora'] ?? dados['preco'];
     final preco = valor is num
         ? valor.toDouble()
-        : double.tryParse(
-              valor?.toString().replaceAll(',', '.') ?? '',
-            ) ??
-            0;
+        : double.tryParse(valor?.toString().replaceAll(',', '.') ?? '') ?? 0;
 
     final avaliacao = dados['avaliacao'] is num
         ? (dados['avaliacao'] as num).toDouble()
@@ -44,14 +55,6 @@ class ProfissionalModel {
     final totalAvaliacoes = dados['totalAvaliacoes'] is num
         ? (dados['totalAvaliacoes'] as num).toInt()
         : 0;
-
-    final disponibilidade =
-        dados['disponibilidade']?.toString().toLowerCase() ?? '';
-
-    final disponivel = dados['disponivel'] is bool
-        ? dados['disponivel'] as bool
-        : !disponibilidade.contains('ocupado') &&
-              !disponibilidade.contains('indispon');
 
     return ProfissionalModel(
       id: id,
@@ -67,7 +70,7 @@ class ProfissionalModel {
           dados['descricaoProfissional']?.toString() ??
           'Profissional cadastrado na Zeloo.',
       precoHora: preco,
-      disponivel: disponivel,
+      disponivel: estaDisponivel(dados),
     );
   }
 }

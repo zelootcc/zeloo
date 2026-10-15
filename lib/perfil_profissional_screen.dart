@@ -10,6 +10,7 @@ import 'pedidos_profissional_screen.dart';
 import 'perfil_notificacoes_screen.dart';
 import 'relatorios_profissional_screen.dart';
 import 'formatadores.dart';
+import 'profissional_model.dart';
 
 const _gradient = LinearGradient(
   colors: [Color(0xFF00C6D7), Color(0xFF0077B6)],
@@ -129,6 +130,7 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
                     email: email,
                     iniciais: iniciais,
                     disponivel: _disponivel,
+                    ocupado: ProfissionalModel.estaOcupado(dados),
                     onToggle: _alternarDisponibilidade,
                   ),
                 ),
@@ -319,6 +321,7 @@ class _HeaderPerfil extends StatelessWidget {
   final String email;
   final String iniciais;
   final bool disponivel;
+  final bool ocupado;
   final VoidCallback onToggle;
 
   const _HeaderPerfil({
@@ -327,6 +330,7 @@ class _HeaderPerfil extends StatelessWidget {
     required this.email,
     required this.iniciais,
     required this.disponivel,
+    required this.ocupado,
     required this.onToggle,
   });
 
@@ -417,13 +421,15 @@ class _HeaderPerfil extends StatelessWidget {
                   Icon(
                     Icons.circle,
                     size: 10,
-                    color: disponivel
+                    color: disponivel && !ocupado
                         ? const Color(0xFF4CAF50)
                         : Colors.white54,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    disponivel
+                    ocupado
+                        ? 'Ocupado em atendimento'
+                        : disponivel
                         ? 'Disponível para serviços'
                         : 'Indisponível no momento',
                     style: const TextStyle(
