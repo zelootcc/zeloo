@@ -217,7 +217,11 @@ service cloud.firestore {
         request.resource.data.codigo.matches('^[0-9]{4}$') &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['codigo', 'atualizadoEm']);
 
-      allow delete: if autenticado() && resource.data.clienteId == request.auth.uid;
+      // O cliente ou profissional pode apagar somente o código de um pedido encerrado.
+      allow delete: if autenticado() &&
+        (pedidoDepois().clienteId == request.auth.uid ||
+         pedidoDepois().profissionalId == request.auth.uid) &&
+        pedidoDepois().status in ['concluido', 'cancelado'];
     }
 
     match /Avaliacoes/{pedidoId} {

@@ -375,6 +375,10 @@ class FirebaseService {
       }
 
       transaction.update(pedidoRef, alteracoes);
+      if (encerra) {
+        // O código só serve para iniciar o serviço; o histórico fica no pedido.
+        transaction.delete(_db.collection('CodigosPedidos').doc(id));
+      }
       transaction.set(notificacaoRef, {
         'destinatarioId': destinatarioId,
         'remetenteId': remetenteId,
