@@ -197,6 +197,29 @@ service cloud.firestore {
         resource.data.clienteId == request.auth.uid;
     }
 
+    // Chat vinculado ao pedido: somente cliente e profissional podem participar.
+    match /Pedidos/{pedidoId}/Mensagens/{mensagemId} {
+      function participante() {
+        let pedido = get(/databases/$(database)/documents/Pedidos/$(pedidoId)).data;
+        return autenticado() &&
+          (pedido.clienteId == request.auth.uid ||
+           pedido.profissionalId == request.auth.uid);
+      }
+
+      allow get, list: if participante();
+
+      allow create: if participante() &&
+        request.resource.data.keys().hasOnly(['remetenteId', 'texto', 'criadoEm']) &&
+        request.resource.data.keys().hasAll(['remetenteId', 'texto', 'criadoEm']) &&
+        request.resource.data.remetenteId == request.auth.uid &&
+        request.resource.data.texto is string &&
+        request.resource.data.texto.size() > 0 &&
+        request.resource.data.texto.size() <= 2000 &&
+        request.resource.data.criadoEm == request.time;
+
+      allow update, delete: if false;
+    }
+
     match /CodigosPedidos/{pedidoId} {
       function pedidoDepois() {
         return getAfter(/databases/$(database)/documents/Pedidos/$(pedidoId)).data;
