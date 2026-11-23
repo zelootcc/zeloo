@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'botao_voltar.dart';
+import 'conversas_screen.dart';
 
 import 'avaliacoes_profissional_screen.dart';
 import 'cadastro_perfil_profissional_screen.dart';
@@ -234,6 +235,18 @@ class _PerfilProfissionalScreenState extends State<PerfilProfissionalScreen> {
                           MaterialPageRoute(
                             builder: (_) =>
                                 const RelatoriosProfissionalScreen(),
+                          ),
+                        ),
+                      ),
+                      _MenuCard(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: 'Mensagens',
+                        subtitle: 'Converse sobre seus pedidos',
+                        cor: const Color(0xFF0077B6),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ConversasScreen(profissional: true),
                           ),
                         ),
                       ),
