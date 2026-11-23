@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'botao_voltar.dart';
+import 'conversas_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_service.dart';
@@ -127,6 +128,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const PerfilPagamentosScreen(),
+                          ),
+                        ),
+                      ),
+                      _MenuCard(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: 'Mensagens',
+                        subtitle: 'Converse sobre seus pedidos',
+                        cor: const Color(0xFF0077B6),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ConversasScreen(profissional: false),
                           ),
                         ),
                       ),
