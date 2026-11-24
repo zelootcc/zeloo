@@ -6,6 +6,7 @@ import 'firebase_service.dart';
 import 'pedido_status.dart';
 import 'zeloo_ui.dart';
 import 'local_pedido_resumo.dart';
+import 'chat_pedido_screen.dart';
 
 class PedidosProfissionalScreen extends StatefulWidget {
   final String? pedidoDestacadoId;
@@ -643,6 +644,22 @@ class _CardPedidoProfissionalState extends State<_CardPedidoProfissional> {
             ),
           ),
           LocalPedidoResumo(dados: dados),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                label: const Text('Conversar'),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChatPedidoScreen(pedidoId: widget.id),
+                  ),
+                ),
+              ),
+            ),
+          ),
           if (status != PedidoStatus.cancelado) ProgressoPedido(status: status),
           if (status != PedidoStatus.concluido &&
               status != PedidoStatus.cancelado)
