@@ -321,6 +321,82 @@ class FirebaseService {
     return _db.collection('CodigosPedidos').doc(pedidoId).snapshots();
   }
 
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> observarPedido(
+    String pedidoId,
+  ) => _db.collection('Pedidos').doc(pedidoId).snapshots();
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> mensagensPedido(
+    String pedidoId,
+  ) => _db
+      .collection('Pedidos')
+      .doc(pedidoId)
+      .collection('Mensagens')
+      .snapshots();
+
+  static Future<void> enviarMensagemPedido({
+    required String pedidoId,
+    required String mensagem,
+  }) async {
+    final texto = mensagem.trim();
+    if (texto.isEmpty || texto.length > 600) {
+      throw Exception('A mensagem deve ter entre 1 e 600 caracteres.');
+    }
+
+    final pedidoRef = _pedido(pedidoId);
+    final pedido = await pedidoRef.get();
+    final dados = pedido.data();
+    if (dados == null) throw Exception('Pedido não encontrado.');
+
+    final status = PedidoStatus.normalizar(
+      dados['status']?.toString() ?? PedidoStatus.aguardando,
+    );
+    if (!PedidoStatus.chatDisponivel(status)) {
+      throw Exception('A conversa deste pedido já foi encerrada.');
+    }
+
+    final remetenteId = uid;
+    final souCliente = dados['clienteId'] == remetenteId;
+    final souProfissional = dados['profissionalId'] == remetenteId;
+    if (!souCliente && !souProfissional) {
+      throw Exception('Você não participa deste pedido.');
+    }
+
+    final destinatarioId =
+        (souCliente ? dados['profissionalId'] : dados['clienteId'])?.toString();
+    if (destinatarioId == null || destinatarioId.isEmpty) {
+      throw Exception('Participante do pedido não encontrado.');
+    }
+    final remetenteNome =
+        (souCliente ? dados['clienteNome'] : dados['profissionalNome'])
+            ?.toString()
+            .trim();
+    final mensagemRef = pedidoRef.collection('Mensagens').doc();
+    final notificacaoRef = _db.collection('Notificacoes').doc();
+    final resumo = texto.length > 100 ? '${texto.substring(0, 100)}…' : texto;
+    final lote = _db.batch();
+    lote.set(mensagemRef, {
+      'pedidoId': pedidoId,
+      'remetenteId': remetenteId,
+      'destinatarioId': destinatarioId,
+      'remetenteNome': remetenteNome?.isEmpty ?? true
+          ? 'Contato'
+          : remetenteNome,
+      'texto': texto,
+      'criadoEm': FieldValue.serverTimestamp(),
+    });
+    lote.set(notificacaoRef, {
+      'destinatarioId': destinatarioId,
+      'remetenteId': remetenteId,
+      'pedidoId': pedidoId,
+      'tipo': 'nova_mensagem',
+      'titulo': 'Nova mensagem sobre o pedido',
+      'mensagem': resumo,
+      'lida': false,
+      'criadoEm': FieldValue.serverTimestamp(),
+    });
+    await lote.commit();
+  }
+
   static DocumentReference<Map<String, dynamic>> _pedido(String id) =>
       _db.collection('Pedidos').doc(id);
 

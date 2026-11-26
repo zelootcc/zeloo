@@ -5,6 +5,7 @@ import 'avaliacao_dialog.dart';
 import 'botao_voltar.dart';
 import 'firebase_service.dart';
 import 'pedido_status.dart';
+import 'chat_pedido_screen.dart';
 import 'zeloo_ui.dart';
 import 'local_pedido_resumo.dart';
 import 'chat_pedido_screen.dart';
@@ -436,6 +437,8 @@ class _CardPedidoClienteState extends State<_CardPedidoCliente> {
             ),
           ),
           if (status != PedidoStatus.cancelado) ProgressoPedido(status: status),
+          if (PedidoStatus.chatDisponivel(status))
+            BotaoChatPedido(pedidoId: widget.id),
           if (PedidoStatus.codigoVisivelParaCliente(status))
             _CodigoDoPedido(
               pedidoId: widget.id,

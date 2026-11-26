@@ -31,11 +31,17 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
             : '$quantidade notificaç${quantidade == 1 ? 'ão apagada' : 'ões apagadas'}.';
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(mensagem)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível concluir a exclusão. Tente novamente.')),
+        const SnackBar(
+          content: Text(
+            'Não foi possível concluir a exclusão. Tente novamente.',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _excluindo = false);
@@ -75,6 +81,8 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
         return (icon: Icons.pin_rounded, color: const Color(0xFF7B61FF));
       case 'nova_avaliacao':
         return (icon: Icons.star_rounded, color: const Color(0xFFFFB020));
+      case 'nova_mensagem':
+        return (icon: Icons.chat_bubble_rounded, color: zelooTurquesa);
       default:
         return (icon: Icons.notifications_rounded, color: zelooAzul);
     }
@@ -158,20 +166,30 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
               child: Row(
                 children: [
                   const Expanded(
-                    child: Text('Sua central',
-                      style: TextStyle(color: zelooTexto, fontWeight: FontWeight.w800)),
+                    child: Text(
+                      'Sua central',
+                      style: TextStyle(
+                        color: zelooTexto,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: _excluindo ? null : () => _apagar(),
                     icon: _excluindo
-                        ? const SizedBox(width: 16, height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Icon(Icons.delete_sweep_rounded, size: 20),
                     label: Text(_excluindo ? 'Apagando...' : 'Apagar lidas'),
                     style: TextButton.styleFrom(
                       foregroundColor: zelooAzul,
                       backgroundColor: zelooSuave,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
                 ],
@@ -206,7 +224,10 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
                                 color: aparencia.color.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: Icon(aparencia.icon, color: aparencia.color),
+                              child: Icon(
+                                aparencia.icon,
+                                color: aparencia.color,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -262,14 +283,22 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
                               children: [
                                 const Padding(
                                   padding: EdgeInsets.only(top: 11),
-                                  child: Icon(Icons.chevron_right_rounded,
-                                    color: Color(0xFF9AAAB8), size: 22),
+                                  child: Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Color(0xFF9AAAB8),
+                                    size: 22,
+                                  ),
                                 ),
                                 if (lida)
                                   IconButton(
                                     tooltip: 'Apagar notificação lida',
-                                    onPressed: _excluindo ? null : () => _apagar(id: doc.id),
-                                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                                    onPressed: _excluindo
+                                        ? null
+                                        : () => _apagar(id: doc.id),
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 20,
+                                    ),
                                     color: zelooAzul,
                                   ),
                               ],

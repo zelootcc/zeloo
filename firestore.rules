@@ -195,6 +195,45 @@ service cloud.firestore {
 
       allow delete: if autenticado() &&
         resource.data.clienteId == request.auth.uid;
+
+      match /Mensagens/{mensagemId} {
+        function pedidoDoChat() {
+          return get(/databases/$(database)/documents/Pedidos/$(id)).data;
+        }
+
+        function participanteDoChat() {
+          return pedidoDoChat().clienteId == request.auth.uid ||
+            pedidoDoChat().profissionalId == request.auth.uid;
+        }
+
+        function chatAtivo() {
+          return pedidoDoChat().status in [
+            'aguardando', 'aceito', 'confirmado', 'a_caminho',
+            'aguardando_codigo', 'em_andamento', 'aguardando_conclusao'
+          ];
+        }
+
+        allow get, list: if autenticado() && participanteDoChat();
+        allow create: if autenticado() && participanteDoChat() && chatAtivo() &&
+          request.resource.data.keys().hasOnly([
+            'pedidoId', 'remetenteId', 'destinatarioId', 'remetenteNome',
+            'texto', 'criadoEm'
+          ]) &&
+          request.resource.data.pedidoId == id &&
+          request.resource.data.remetenteId == request.auth.uid &&
+          request.resource.data.remetenteNome is string &&
+          request.resource.data.remetenteNome.size() <= 100 &&
+          request.resource.data.texto is string &&
+          request.resource.data.texto.size() > 0 &&
+          request.resource.data.texto.size() <= 600 &&
+          (
+            (request.resource.data.remetenteId == pedidoDoChat().clienteId &&
+              request.resource.data.destinatarioId == pedidoDoChat().profissionalId) ||
+            (request.resource.data.remetenteId == pedidoDoChat().profissionalId &&
+              request.resource.data.destinatarioId == pedidoDoChat().clienteId)
+          );
+        allow update, delete: if false;
+      }
     }
 
     // Chat vinculado ao pedido: somente cliente e profissional podem participar.

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import 'firebase_service.dart';
 import 'pedido_status.dart';
+import 'chat_pedido_screen.dart';
 import 'zeloo_ui.dart';
 import 'local_pedido_resumo.dart';
 import 'chat_pedido_screen.dart';
@@ -12,7 +13,11 @@ class PedidosProfissionalScreen extends StatefulWidget {
   final String? pedidoDestacadoId;
   final VoidCallback? onVoltar;
 
-  const PedidosProfissionalScreen({super.key, this.pedidoDestacadoId, this.onVoltar});
+  const PedidosProfissionalScreen({
+    super.key,
+    this.pedidoDestacadoId,
+    this.onVoltar,
+  });
 
   @override
   State<PedidosProfissionalScreen> createState() =>
@@ -661,6 +666,8 @@ class _CardPedidoProfissionalState extends State<_CardPedidoProfissional> {
             ),
           ),
           if (status != PedidoStatus.cancelado) ProgressoPedido(status: status),
+          if (PedidoStatus.chatDisponivel(status))
+            BotaoChatPedido(pedidoId: widget.id),
           if (status != PedidoStatus.concluido &&
               status != PedidoStatus.cancelado)
             Padding(

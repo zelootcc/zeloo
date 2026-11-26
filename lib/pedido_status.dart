@@ -88,6 +88,15 @@ class PedidoStatus {
   static bool codigoVisivelParaCliente(String status) =>
       {aceito, aCaminho, aguardandoCodigo}.contains(normalizar(status));
 
+  static bool chatDisponivel(String status) => {
+    aguardando,
+    aceito,
+    aCaminho,
+    aguardandoCodigo,
+    emAndamento,
+    aguardandoConclusao,
+  }.contains(normalizar(status));
+
   static bool pertenceAoFiltro(String status, String filtro) {
     final atual = normalizar(status);
     switch (filtro) {

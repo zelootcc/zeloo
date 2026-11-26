@@ -40,4 +40,19 @@ void main() {
       expect(PedidoStatus.podeCancelar(PedidoStatus.emAndamento), isFalse);
     },
   );
+
+  test(
+    'chat permanece disponível durante o atendimento e fecha ao encerrar',
+    () {
+      expect(PedidoStatus.chatDisponivel(PedidoStatus.aguardando), isTrue);
+      expect(PedidoStatus.chatDisponivel(PedidoStatus.aCaminho), isTrue);
+      expect(PedidoStatus.chatDisponivel(PedidoStatus.emAndamento), isTrue);
+      expect(
+        PedidoStatus.chatDisponivel(PedidoStatus.aguardandoConclusao),
+        isTrue,
+      );
+      expect(PedidoStatus.chatDisponivel(PedidoStatus.concluido), isFalse);
+      expect(PedidoStatus.chatDisponivel(PedidoStatus.cancelado), isFalse);
+    },
+  );
 }

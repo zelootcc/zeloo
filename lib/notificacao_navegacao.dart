@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'avaliacoes_profissional_screen.dart';
+import 'chat_pedido_screen.dart';
 import 'firebase_service.dart';
 import 'pedidos_profissional_screen.dart';
 import 'pedidos_screen.dart';
@@ -25,6 +26,15 @@ class NotificacaoNavegacao {
         navigator.push(
           MaterialPageRoute(
             builder: (_) => const AvaliacoesProfissionalScreen(),
+          ),
+        );
+        return;
+      }
+
+      if (tipo == 'nova_mensagem' && pedidoId != null && pedidoId.isNotEmpty) {
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => ChatPedidoScreen(pedidoId: pedidoId),
           ),
         );
         return;
