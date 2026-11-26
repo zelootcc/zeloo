@@ -7,8 +7,13 @@ import 'zeloo_ui.dart';
 class ItemNavegacaoZeloo {
   final IconData icon;
   final String label;
+  final bool acao;
 
-  const ItemNavegacaoZeloo({required this.icon, required this.label});
+  const ItemNavegacaoZeloo({
+    required this.icon,
+    required this.label,
+    this.acao = false,
+  });
 }
 
 class BarraNavegacaoZeloo extends StatelessWidget {
@@ -25,8 +30,10 @@ class BarraNavegacaoZeloo extends StatelessWidget {
     this.indiceCentral,
   }) : assert(itens.length >= 2),
        assert(indice >= 0 && indice < itens.length),
-       assert(indiceCentral == null ||
-           (indiceCentral > 0 && indiceCentral < itens.length - 1));
+       assert(
+         indiceCentral == null ||
+             (indiceCentral > 0 && indiceCentral < itens.length - 1),
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -59,16 +66,21 @@ class BarraNavegacaoZeloo extends StatelessWidget {
             return centro;
           }).toList();
           return TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: indice.toDouble(), end: indice.toDouble()),
+            tween: Tween<double>(
+              begin: indice.toDouble(),
+              end: indice.toDouble(),
+            ),
             duration: duracao,
             curve: Curves.easeInOutCubic,
             builder: (context, posicao, _) {
               final anterior = posicao.floor().clamp(0, itens.length - 1);
               final seguinte = posicao.ceil().clamp(0, itens.length - 1);
               final progresso = posicao - anterior;
-              final centro = centros[anterior] +
+              final centro =
+                  centros[anterior] +
                   (centros[seguinte] - centros[anterior]) * progresso;
-              final largura = larguras[anterior] +
+              final largura =
+                  larguras[anterior] +
                   (larguras[seguinte] - larguras[anterior]) * progresso;
               return Stack(
                 children: [
@@ -92,7 +104,8 @@ class BarraNavegacaoZeloo extends StatelessWidget {
                         final item = itens[i];
                         final selecionado = i == indice;
                         final destaque = (1 - (posicao - i).abs())
-                            .clamp(0.0, 1.0).toDouble();
+                            .clamp(0.0, 1.0)
+                            .toDouble();
                         return SizedBox(
                           width: larguras[i],
                           child: Semantics(
@@ -115,24 +128,39 @@ class BarraNavegacaoZeloo extends StatelessWidget {
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
                                         Transform.translate(
-                                          offset: Offset(0, -12 * destaque),
+                                          offset: Offset(
+                                            0,
+                                            item.acao ? -6 : -12 * destaque,
+                                          ),
                                           child: Container(
                                             width: 44,
                                             height: 44,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: Colors.white.withValues(
-                                                alpha: destaque,
-                                              ),
+                                              border: item.acao
+                                                  ? Border.all(
+                                                      color: Colors.white,
+                                                      width: 2,
+                                                    )
+                                                  : null,
+                                              color: item.acao
+                                                  ? const Color(0xFF005A99)
+                                                  : Colors.white.withValues(
+                                                      alpha: destaque,
+                                                    ),
                                             ),
                                             child: Icon(
                                               item.icon,
-                                              size: 25 + destaque,
-                                              color: Color.lerp(
-                                                Colors.white70,
-                                                zelooAzul,
-                                                destaque,
-                                              ),
+                                              size: item.acao
+                                                  ? 32
+                                                  : 25 + destaque,
+                                              color: item.acao
+                                                  ? Colors.white
+                                                  : Color.lerp(
+                                                      Colors.white70,
+                                                      zelooAzul,
+                                                      destaque,
+                                                    ),
                                             ),
                                           ),
                                         ),
@@ -144,10 +172,11 @@ class BarraNavegacaoZeloo extends StatelessWidget {
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
                                               fontSize: 11,
-                                              color: selecionado
+                                              color: selecionado || item.acao
                                                   ? Colors.white
                                                   : Colors.white70,
-                                              fontWeight: selecionado
+                                              fontWeight:
+                                                  selecionado || item.acao
                                                   ? FontWeight.w700
                                                   : FontWeight.w400,
                                             ),
@@ -188,14 +217,20 @@ class _FundoBarra extends CustomPainter {
       ..moveTo(0, topo)
       ..lineTo(centro - meiaLargura, topo)
       ..cubicTo(
-        centro - meiaLargura * 0.5, topo,
-        centro - meiaLargura * 0.5, 0,
-        centro, 0,
+        centro - meiaLargura * 0.5,
+        topo,
+        centro - meiaLargura * 0.5,
+        0,
+        centro,
+        0,
       )
       ..cubicTo(
-        centro + meiaLargura * 0.5, 0,
-        centro + meiaLargura * 0.5, topo,
-        centro + meiaLargura, topo,
+        centro + meiaLargura * 0.5,
+        0,
+        centro + meiaLargura * 0.5,
+        topo,
+        centro + meiaLargura,
+        topo,
       )
       ..lineTo(size.width, topo)
       ..lineTo(size.width, size.height)

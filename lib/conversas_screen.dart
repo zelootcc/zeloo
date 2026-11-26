@@ -28,12 +28,16 @@ class ConversasScreen extends StatelessWidget {
             : FirebaseService.meusPedidosCliente(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(child: Text('Não foi possível carregar as conversas.'));
+            return const Center(
+              child: Text('Não foi possível carregar as conversas.'),
+            );
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final pedidos = snapshot.data!.docs;
+          final pedidos = snapshot.data!.docs
+              .where((doc) => doc.data()['profissionalId'] != '')
+              .toList();
           if (pedidos.isEmpty) {
             return const Center(
               child: Padding(
@@ -52,10 +56,12 @@ class ConversasScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final pedido = pedidos[index];
               final dados = pedido.data();
-              final nome = (profissional
-                      ? dados['clienteNome']
-                      : dados['profissionalNome'])
-                  ?.toString() ?? (profissional ? 'Cliente' : 'Profissional');
+              final nome =
+                  (profissional
+                          ? dados['clienteNome']
+                          : dados['profissionalNome'])
+                      ?.toString() ??
+                  (profissional ? 'Cliente' : 'Profissional');
               final servico = dados['servico']?.toString() ?? 'Serviço';
               return Card(
                 color: Colors.white,
@@ -76,7 +82,11 @@ class ConversasScreen extends StatelessWidget {
                     nome,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  subtitle: Text(servico, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  subtitle: Text(
+                    servico,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => Navigator.push(
                     context,

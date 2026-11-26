@@ -287,6 +287,145 @@ class FirebaseService {
     return pedidoRef.id;
   }
 
+  static Future<void> publicarChamado(
+    String area,
+    Map<String, dynamic> endereco,
+    String descricao,
+  ) async {
+    final local = dadosLocalAtendimento(endereco);
+    final regiao = local['cidade'] as String;
+    final perfis = await _db.collection('Profissionais').get();
+    final convidados = perfis.docs
+        .map((doc) => ProfissionalModel.fromFirestore(doc.id, doc.data()))
+        .where(
+          (p) =>
+              p.id != uid &&
+              p.areas.contains(area) &&
+              p.cidade.trim().toLowerCase() == regiao.trim().toLowerCase(),
+        )
+        .map((p) => p.id)
+        .toList();
+    if (convidados.isEmpty) {
+      throw Exception('Nenhum profissional dessa área na região informada.');
+    }
+    final cliente = await _db.collection('Clientes').doc(uid).get();
+    final pedido = _db.collection('Pedidos').doc();
+    final lote = _db.batch();
+    lote.set(pedido, {
+      'clienteId': uid,
+      'clienteNome': cliente.data()?['nome'] ?? 'Cliente',
+      'profissionalId': '',
+      'profissionalNome': 'Aguardando profissional',
+      'servicoId': pedido.id,
+      'servico': area,
+      'descricao': descricao,
+      'regiao': regiao,
+      'proposta': null,
+      'status': PedidoStatus.aguardando,
+      'data': 'A combinar',
+      'horario': 'A combinar',
+      'convidados': convidados,
+      'tentativasCodigo': 0,
+      'codigoValidado': false,
+      'criadoEm': FieldValue.serverTimestamp(),
+      'atualizadoEm': FieldValue.serverTimestamp(),
+    });
+    lote.set(_db.collection('CodigosPedidos').doc(pedido.id), {
+      'pedidoId': pedido.id,
+      'clienteId': uid,
+      'profissionalId': '',
+      'localAtendimento': local,
+      'codigo': Random.secure().nextInt(10000).toString().padLeft(4, '0'),
+      'criadoEm': FieldValue.serverTimestamp(),
+    });
+    await lote.commit();
+  }
+
+  static Future<void> proporChamado(
+    String id,
+    double valor,
+    String comentario,
+  ) async {
+    final perfil = await _db.collection('Profissionais').doc(uid).get();
+    if (!ProfissionalModel.estaDisponivel(perfil.data() ?? {})) {
+      throw Exception(
+        'Você precisa estar disponível para enviar uma proposta.',
+      );
+    }
+    await _pedido(id).update({
+      'proposta': {
+        'id': uid,
+        'nome': perfil.data()?['nome'] ?? 'Profissional',
+        'valor': valor,
+        'comentario': comentario,
+      },
+      'convidados': FieldValue.arrayRemove([uid]),
+    });
+  }
+
+  static Future<void> responderProposta(
+    String id,
+    Map proposta,
+    bool aceitar,
+  ) async {
+    final pedido = _pedido(id);
+    await _db.runTransaction((tx) async {
+      final dados = (await tx.get(pedido)).data();
+      if (dados?['status'] != PedidoStatus.aguardando ||
+          dados?['proposta']?['id'] != proposta['id']) {
+        throw Exception('Esta proposta já foi encerrada.');
+      }
+      if (!aceitar) {
+        tx.update(pedido, {'proposta': null});
+        return;
+      }
+      final perfil = _db
+          .collection('Profissionais')
+          .doc(proposta['id'] as String);
+      final profissional = (await tx.get(perfil)).data();
+      if (profissional == null ||
+          !ProfissionalModel.estaDisponivel(profissional)) {
+        throw Exception(
+          'Profissional indisponível. Você pode recusar a proposta.',
+        );
+      }
+      final privado = (await tx.get(
+        _db.collection('CodigosPedidos').doc(id),
+      )).data();
+      tx.update(pedido, {
+        'profissionalId': perfil.id,
+        'profissionalNome': proposta['nome'],
+        'valor': proposta['valor'],
+        'convidados': [],
+        'proposta': null,
+        if (privado?['localAtendimento'] != null)
+          'localAtendimento': privado!['localAtendimento'],
+        'status': PedidoStatus.aceito,
+        'aceitoEm': FieldValue.serverTimestamp(),
+        'atualizadoEm': FieldValue.serverTimestamp(),
+      });
+      tx.update(perfil, {'pedidoEmAtendimento': id});
+      tx.set(_db.collection('Notificacoes').doc(), {
+        'destinatarioId': perfil.id,
+        'remetenteId': uid,
+        'pedidoId': id,
+        'tipo': 'pedido_aceito',
+        'titulo': 'Proposta aceita',
+        'mensagem': 'Confira o endereço e converse com o cliente pelo pedido.',
+        'lida': false,
+        'criadoEm': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> chamadosRecebidos() => _db
+      .collection('Pedidos')
+      .where('convidados', arrayContains: uid)
+      .snapshots();
+
+  static Future<void> recusarChamado(String id) => _pedido(id).update({
+    'convidados': FieldValue.arrayRemove([uid]),
+  });
   static Stream<QuerySnapshot<Map<String, dynamic>>> meusPedidosCliente() {
     return _db
         .collection('Pedidos')
@@ -418,6 +557,14 @@ class FirebaseService {
     final destinatarioId = remetenteId == dados['clienteId']
         ? dados['profissionalId']?.toString()
         : dados['clienteId']?.toString();
+    final chamadoAberto =
+        dados['profissionalId'] == '' && dados['convidados'] is List;
+    if (chamadoAberto && alteracoes['status'] == PedidoStatus.cancelado) {
+      lote.update(pedidoRef, {...alteracoes, 'convidados': []});
+      lote.delete(_db.collection('CodigosPedidos').doc(id));
+      await lote.commit();
+      return;
+    }
     if (destinatarioId == null || destinatarioId.isEmpty) {
       throw Exception('Participante do pedido não encontrado.');
     }
@@ -428,12 +575,12 @@ class FirebaseService {
         status == PedidoStatus.concluido || status == PedidoStatus.cancelado;
     final profissionalRef = _db
         .collection('Profissionais')
-        .doc(dados['profissionalId'].toString());
+        .doc(chamadoAberto ? remetenteId : dados['profissionalId'].toString());
     // As regras conferem o perfil novamente ao gravar o lote inteiro.
     final profissional = aceita || encerra ? await profissionalRef.get() : null;
     final dadosProfissional = profissional?.data();
     if (aceita) {
-      if (remetenteId != dados['profissionalId'] ||
+      if ((!chamadoAberto && remetenteId != dados['profissionalId']) ||
           PedidoStatus.normalizar(dados['status']?.toString() ?? '') !=
               PedidoStatus.aguardando) {
         throw Exception('Este pedido não pode mais ser aceito.');
@@ -441,6 +588,13 @@ class FirebaseService {
       if (dadosProfissional == null ||
           !ProfissionalModel.estaDisponivel(dadosProfissional)) {
         throw Exception('Você já está ocupado ou indisponível no momento.');
+      }
+      if (chamadoAberto) {
+        alteracoes.addAll({
+          'profissionalId': remetenteId,
+          'profissionalNome': dadosProfissional['nome'] ?? 'Profissional',
+          'convidados': [],
+        });
       }
       lote.update(profissionalRef, {'pedidoEmAtendimento': id});
     } else if (encerra && dadosProfissional?['pedidoEmAtendimento'] == id) {

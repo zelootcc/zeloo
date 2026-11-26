@@ -66,6 +66,16 @@ service cloud.firestore {
             .hasOnly(['pedidoEmAtendimento']);
       }
 
+      function reservaPorProposta() {
+        let id = request.resource.data.pedidoEmAtendimento;
+        let antes = get(/databases/$(database)/documents/Pedidos/$(id)).data;
+        let depois = getAfter(/databases/$(database)/documents/Pedidos/$(id)).data;
+        return resource.data.get('pedidoEmAtendimento','') == '' && resource.data.get('disponivel',true) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pedidoEmAtendimento']) &&
+          antes.clienteId == request.auth.uid && antes.status == 'aguardando' &&
+          antes.proposta.id == uid && depois.profissionalId == uid && depois.status == 'aceito';
+      }
+      allow update: if autenticado() && reservaPorProposta();
       allow update: if mediaDentroDoLimite() && (donoDoPerfil(uid) ||
         (autenticado() && (liberacaoDeAtendimentoValida() ||
           atualizacaoDeAvaliacaoValida())));
@@ -80,6 +90,48 @@ service cloud.firestore {
     }
 
     match /Pedidos/{id} {
+      function convidado() {
+        return autenticado() && request.auth.uid in resource.data.get('convidados', []);
+      }
+
+      allow read: if convidado();
+      allow create: if autenticado() && request.resource.data.clienteId == request.auth.uid &&
+        request.resource.data.profissionalId == '' && request.resource.data.status == 'aguardando' &&
+        request.resource.data.convidados is list && request.resource.data.convidados.size() > 0;
+
+      allow update: if recursoAberto() && (
+        (convidado() && mudouSomente(['convidados']) &&
+          request.resource.data.convidados == resource.data.convidados.removeAll([request.auth.uid])) ||
+        (convidado() && request.auth.uid != resource.data.clienteId &&
+          resource.data.get('proposta', null) == null && mudouSomente(['proposta','convidados']) &&
+          request.resource.data.convidados == resource.data.convidados.removeAll([request.auth.uid]) &&
+          propostaValida(request.resource.data.proposta)) ||
+        (donoDoPerfil(resource.data.clienteId) && resource.data.get('proposta', null) is map &&
+          request.resource.data.proposta == null && (mudouSomente(['proposta']) ||
+            (request.resource.data.profissionalId == resource.data.proposta.id &&
+             request.resource.data.profissionalNome == resource.data.proposta.nome &&
+             request.resource.data.valor == resource.data.proposta.valor &&
+             request.resource.data.status == 'aceito' && request.resource.data.convidados == [] &&
+             getAfter(/databases/$(database)/documents/Profissionais/$(resource.data.proposta.id)).data.pedidoEmAtendimento == id &&
+             mudouSomente(['proposta','convidados','profissionalId','profissionalNome','valor','status','aceitoEm','atualizadoEm','localAtendimento'])))) ||
+        (donoDoPerfil(resource.data.clienteId) && request.resource.data.status == 'cancelado' &&
+          request.resource.data.convidados == [] && motivoValido() &&
+          request.resource.data.canceladoPor == request.auth.uid &&
+          mudouSomente(['status','convidados','canceladoPor','motivoCancelamento','canceladoEm','atualizadoEm']))
+      );
+
+      function propostaValida(p) {
+        let perfil = get(/databases/$(database)/documents/Profissionais/$(request.auth.uid)).data;
+        return p.keys().hasOnly(['id','nome','valor','comentario']) &&
+          p.id == request.auth.uid && p.nome == perfil.get('nome','Profissional') &&
+          perfil.get('disponivel', true) && perfil.get('pedidoEmAtendimento','') == '' &&
+          p.valor is number && p.valor > 0 && p.valor <= 99999999 &&
+          p.comentario is string && p.comentario.size() <= 300;
+      }
+
+      function recursoAberto() {
+        return resource.data.profissionalId == '' && resource.data.status == 'aguardando';
+      }
       allow create: if autenticado() &&
         request.resource.data.clienteId == request.auth.uid &&
         get(/databases/$(database)/documents/Profissionais/$(request.resource.data.profissionalId))
@@ -247,7 +299,7 @@ service cloud.firestore {
 
       allow get, list: if participante();
 
-      allow create: if participante() &&
+      allow create: if participante() && get(/databases/$(database)/documents/Pedidos/$(pedidoId)).data.status in ['aguardando', 'aceito', 'confirmado', 'a_caminho', 'aguardando_codigo', 'em_andamento', 'aguardando_conclusao'] &&
         request.resource.data.keys().hasOnly(['remetenteId', 'texto', 'criadoEm']) &&
         request.resource.data.keys().hasAll(['remetenteId', 'texto', 'criadoEm']) &&
         request.resource.data.remetenteId == request.auth.uid &&

@@ -408,7 +408,9 @@ class _CardPedidoClienteState extends State<_CardPedidoCliente> {
                   ),
                 ),
                 Text(
-                  'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}',
+                  dados['valor'] == null
+                      ? 'Aguardando orçamento'
+                      : 'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -419,24 +421,26 @@ class _CardPedidoClienteState extends State<_CardPedidoCliente> {
             ),
           ),
           LocalPedidoResumo(dados: dados),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.chat_bubble_outline_rounded),
-                label: const Text('Conversar'),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChatPedidoScreen(pedidoId: widget.id),
+          if (dados['profissionalId'] != '')
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  label: const Text('Conversar'),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatPedidoScreen(pedidoId: widget.id),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           if (status != PedidoStatus.cancelado) ProgressoPedido(status: status),
-          if (PedidoStatus.chatDisponivel(status))
+          if (dados['profissionalId'] != '' &&
+              PedidoStatus.chatDisponivel(status))
             BotaoChatPedido(pedidoId: widget.id),
           if (PedidoStatus.codigoVisivelParaCliente(status))
             _CodigoDoPedido(

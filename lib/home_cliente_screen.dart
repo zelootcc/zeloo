@@ -109,19 +109,29 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                         StreamBuilder(
                           stream: _enderecos,
                           builder: (context, snapshot) => LocalizacaoCliente(
-                            enderecos: ((snapshot.data?.data()?['enderecos'] as List?) ?? [])
-                                .whereType<Map>()
-                                .map((item) => Map<String, dynamic>.from(item))
-                                .toList(),
-                            carregandoEnderecos: snapshot.connectionState == ConnectionState.waiting,
+                            enderecos:
+                                ((snapshot.data?.data()?['enderecos']
+                                            as List?) ??
+                                        [])
+                                    .whereType<Map>()
+                                    .map(
+                                      (item) => Map<String, dynamic>.from(item),
+                                    )
+                                    .toList(),
+                            carregandoEnderecos:
+                                snapshot.connectionState ==
+                                ConnectionState.waiting,
                             erroEnderecos: snapshot.hasError,
-                            selecionarEndereco: (id) => FirebaseService.alterarItemPrivado(
-                              'enderecos',
-                              principal: id,
-                            ),
+                            selecionarEndereco: (id) =>
+                                FirebaseService.alterarItemPrivado(
+                                  'enderecos',
+                                  principal: id,
+                                ),
                             gerenciarEnderecos: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const PerfilEnderecosScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const PerfilEnderecosScreen(),
+                              ),
                             ),
                           ),
                         ),

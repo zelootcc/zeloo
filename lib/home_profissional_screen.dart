@@ -1,3 +1,4 @@
+import 'chamados_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_service.dart';
@@ -234,12 +235,12 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             onTap: widget.onNavegar != null
                                 ? () => widget.onNavegar!(4)
                                 : () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const PerfilProfissionalScreen(),
-                              ),
-                            ),
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const PerfilProfissionalScreen(),
+                                    ),
+                                  ),
                           ),
                           _MenuCard(
                             title: 'Meus Serviços',
@@ -249,9 +250,23 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             onTap: widget.onNavegar != null
                                 ? () => widget.onNavegar!(0)
                                 : () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const MeusServicosScreen(),
+                                    ),
+                                  ),
+                          ),
+                          _MenuCard(
+                            title: 'Chamados da região',
+                            description: 'Aceite serviços da sua área',
+                            icon: Icons.campaign_rounded,
+                            cor: const Color(0xFF0077B6),
+                            onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const MeusServicosScreen(),
+                                builder: (_) =>
+                                    const ChamadosScreen(profissional: true),
                               ),
                             ),
                           ),
@@ -263,12 +278,12 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             onTap: widget.onNavegar != null
                                 ? () => widget.onNavegar!(1)
                                 : () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const PedidosProfissionalScreen(),
-                              ),
-                            ),
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const PedidosProfissionalScreen(),
+                                    ),
+                                  ),
                           ),
                           _MenuCard(
                             title: 'Relatórios',
@@ -278,12 +293,12 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
                             onTap: widget.onNavegar != null
                                 ? () => widget.onNavegar!(3)
                                 : () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const RelatoriosProfissionalScreen(),
-                              ),
-                            ),
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const RelatoriosProfissionalScreen(),
+                                    ),
+                                  ),
                           ),
                         ],
                       ),
@@ -294,16 +309,18 @@ class _HomeProfissionalScreenState extends State<HomeProfissionalScreen> {
               ],
             ),
           ),
-          bottomNavigationBar: !widget.mostrarRodape ? null : Container(
-            height: 52,
-            decoration: const BoxDecoration(gradient: _gradient),
-            child: const Center(
-              child: Text(
-                'Zeloo © 2026',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ),
-          ),
+          bottomNavigationBar: !widget.mostrarRodape
+              ? null
+              : Container(
+                  height: 52,
+                  decoration: const BoxDecoration(gradient: _gradient),
+                  child: const Center(
+                    child: Text(
+                      'Zeloo © 2026',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ),
+                ),
         );
       },
     );
