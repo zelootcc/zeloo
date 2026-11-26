@@ -8,7 +8,6 @@ import 'pedido_status.dart';
 import 'chat_pedido_screen.dart';
 import 'zeloo_ui.dart';
 import 'local_pedido_resumo.dart';
-import 'chat_pedido_screen.dart';
 
 class PedidosScreen extends StatefulWidget {
   final VoidCallback? onVoltar;
